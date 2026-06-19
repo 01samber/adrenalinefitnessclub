@@ -21,14 +21,42 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const parsed = loginSchema.safeParse({
+          email: credentials?.email,
+          password: credentials?.password,
+        });
 
         if (!parsed.success) {
+          if (process.env.NODE_ENV !== "production") {
+            console.log("[auth] credentials validation failed", {
+              receivedEmail: credentials?.email,
+              issues: parsed.error.flatten().fieldErrors,
+            });
+          }
           return null;
         }
 
-        const email = parsed.data.email.toLowerCase().trim();
+        const email = parsed.data.email.trim().toLowerCase();
+        const password = parsed.data.password;
+
         const user = await prisma.user.findUnique({ where: { email } });
+
+        let passwordMatches = false;
+
+        if (user) {
+          passwordMatches = await verifyPassword(password, user.passwordHash);
+        }
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[auth] credentials login attempt", {
+            receivedEmail: credentials?.email,
+            email,
+            userFound: Boolean(user),
+            status: user?.status,
+            role: user?.role,
+            passwordMatches,
+          });
+        }
 
         if (!user) {
           return null;
@@ -38,9 +66,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = await verifyPassword(parsed.data.password, user.passwordHash);
-
-        if (!isValid) {
+        if (!passwordMatches) {
           return null;
         }
 
@@ -51,8 +77,8 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          email: user.email,
           name: user.fullName,
+          email: user.email,
           role: user.role,
           status: user.status,
         };
