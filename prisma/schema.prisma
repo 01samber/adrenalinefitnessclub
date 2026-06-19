@@ -1,0 +1,608 @@
+// Adrenaline Fitness Center — database schema
+// PostgreSQL via Neon / Prisma Postgres (external hosting)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  FROZEN
+  SUSPENDED
+  DELETED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum ClientStatus {
+  ACTIVE
+  FROZEN
+  INACTIVE
+  DELETED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  FROZEN
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  PARTIAL
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  WHISH
+  OMT
+  OTHER
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  DISMISSED
+}
+
+enum ReminderChannel {
+  APP
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum ProgressNoteType {
+  GENERAL
+  IMPROVEMENT
+  WARNING
+  RECOMMENDATION
+}
+
+enum WearableProvider {
+  APPLE_HEALTH
+  HEALTH_CONNECT
+  GOOGLE_HEALTH
+  FITBIT
+  GARMIN
+  MANUAL
+}
+
+enum WearableConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  REVOKED
+  ERROR
+}
+
+enum WearableMetricType {
+  STEPS
+  HEART_RATE
+  CALORIES
+  SLEEP
+  WORKOUT
+  WEIGHT
+  BODY_FAT
+  WATER
+  OTHER
+}
+
+enum ScheduleSlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+  CANCELLED
+}
+
+enum BookingStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum BookingRequestedBy {
+  CLIENT
+  OWNER
+}
+
+enum WorkoutIntensity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum NotificationType {
+  PAYMENT
+  BOOKING
+  SUBSCRIPTION
+  FITNESS
+  SYSTEM
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  DISMISSED
+}
+
+// ─── Authentication & Users ──────────────────────────────────────────────────
+
+/// Core user account for owners and clients. Passwords are stored as bcrypt hashes only.
+model User {
+  id           String     @id @default(cuid())
+  fullName     String
+  email        String     @unique
+  phoneNumber  String?
+  passwordHash String
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastLoginAt  DateTime?
+
+  clientProfile ClientProfile?
+
+  // Owner relations
+  ownedScheduleSlots ScheduleSlot[] @relation("ScheduleSlotOwner")
+  ownedBookings      Booking[]      @relation("BookingOwner")
+  ownedWorkoutSessions WorkoutSession[] @relation("WorkoutSessionOwner")
+  progressNotesAuthored ProgressNote[] @relation("ProgressNoteOwner")
+
+  // Client relations
+  subscriptions Subscription[]   @relation("SubscriptionClient")
+  payments        Payment[]        @relation("PaymentClient")
+  paymentReminders PaymentReminder[] @relation("PaymentReminderClient")
+  bodyMeasurements BodyMeasurement[] @relation("BodyMeasurementClient")
+  progressNotes    ProgressNote[]   @relation("ProgressNoteClient")
+  wearableConnections WearableConnection[] @relation("WearableConnectionClient")
+  wearableMetrics  WearableMetric[] @relation("WearableMetricClient")
+  clientBookings   Booking[]        @relation("BookingClient")
+  clientWorkoutSessions WorkoutSession[] @relation("WorkoutSessionClient")
+  notifications    Notification[]
+  auditLogs        AuditLog[]       @relation("AuditLogActor")
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+// ─── Business / Gym Profile ──────────────────────────────────────────────────
+
+/// Single-gym business profile (Adrenaline Fitness Center).
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  phone       String?
+  email       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("businesses")
+}
+
+// ─── Client Profile ──────────────────────────────────────────────────────────
+
+/// Extended fitness and health profile for client users.
+model ClientProfile {
+  id                    String        @id @default(cuid())
+  userId                String        @unique
+  dateOfBirth           DateTime      @db.Date
+  gender                Gender
+  heightCm              Decimal       @db.Decimal(5, 2)
+  emergencyContactName  String
+  emergencyContactPhone String
+  fitnessGoal           String
+  medicalNotes          String?
+  injuries              String?
+  activityLevel         ActivityLevel
+  joinDate              DateTime      @db.Date
+  coachNotes            String?
+  assignedPlanId        String?
+  status                ClientStatus  @default(ACTIVE)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  user         User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  assignedPlan Plan? @relation(fields: [assignedPlanId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("client_profiles")
+}
+
+// ─── Membership Plans ────────────────────────────────────────────────────────
+
+/// Private session membership plans (sessions per week + monthly price).
+model Plan {
+  id              String   @id @default(cuid())
+  name            String
+  sessionsPerWeek Int
+  monthlyPrice    Decimal  @db.Decimal(10, 2)
+  currency        String   @default("USD")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignedProfiles ClientProfile[]
+  subscriptions    Subscription[]
+
+  @@map("plans")
+}
+
+// ─── Subscriptions ─────────────────────────────────────────────────────────────
+
+/// Client subscription to a plan. Status-based lifecycle; never hard-deleted.
+model Subscription {
+  id              String             @id @default(cuid())
+  clientId        String
+  planId          String
+  startDate       DateTime           @db.Date
+  endDate         DateTime?          @db.Date
+  nextBillingDate DateTime           @db.Date
+  status          SubscriptionStatus @default(ACTIVE)
+  autoRenew       Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  client   User              @relation("SubscriptionClient", fields: [clientId], references: [id], onDelete: Restrict)
+  plan     Plan              @relation(fields: [planId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  reminders PaymentReminder[]
+
+  @@index([status])
+  @@index([clientId])
+  @@map("subscriptions")
+}
+
+// ─── Payments ──────────────────────────────────────────────────────────────────
+
+/// Payment records are preserved historically; use status for soft cancellation.
+model Payment {
+  id             String        @id @default(cuid())
+  clientId       String
+  subscriptionId String?
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("USD")
+  paymentDate    DateTime?
+  dueDate        DateTime      @db.Date
+  status         PaymentStatus @default(UNPAID)
+  paymentMethod  PaymentMethod
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  client       User              @relation("PaymentClient", fields: [clientId], references: [id], onDelete: Restrict)
+  subscription Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  reminders    PaymentReminder[]
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([clientId])
+  @@map("payments")
+}
+
+// ─── Payment Reminders ─────────────────────────────────────────────────────────
+
+model PaymentReminder {
+  id             String          @id @default(cuid())
+  clientId       String
+  subscriptionId String?
+  paymentId      String?
+  reminderDate   DateTime        @db.Date
+  status         ReminderStatus  @default(PENDING)
+  channel        ReminderChannel
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  client       User          @relation("PaymentReminderClient", fields: [clientId], references: [id], onDelete: Restrict)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  payment      Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([status])
+  @@map("payment_reminders")
+}
+
+// ─── Body Measurements ─────────────────────────────────────────────────────────
+
+/// Repeated body composition snapshots over time. Raw + calculated values stored as historical records.
+model BodyMeasurement {
+  id                   String    @id @default(cuid())
+  clientId             String
+  measuredAt           DateTime
+  weightKg             Decimal   @db.Decimal(6, 2)
+  heightCmSnapshot     Decimal   @db.Decimal(5, 2)
+  bmi                  Decimal?  @db.Decimal(5, 2)
+  bodyFatPercentage    Decimal?  @db.Decimal(5, 2)
+  bodyFatKg            Decimal?  @db.Decimal(6, 2)
+  musclePercentage     Decimal?  @db.Decimal(5, 2)
+  muscleKg             Decimal?  @db.Decimal(6, 2)
+  waterPercentage      Decimal?  @db.Decimal(5, 2)
+  waterLiters          Decimal?  @db.Decimal(6, 2)
+  visceralFatKg        Decimal?  @db.Decimal(5, 2)
+  basalMetabolicRate   Int?
+  metabolicAge         Int?
+  chestCm              Decimal?  @db.Decimal(5, 2)
+  waistCm              Decimal?  @db.Decimal(5, 2)
+  hipsCm               Decimal?  @db.Decimal(5, 2)
+  armsCm               Decimal?  @db.Decimal(5, 2)
+  thighsCm             Decimal?  @db.Decimal(5, 2)
+  notes                String?
+  coachAssessment      String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  client        User           @relation("BodyMeasurementClient", fields: [clientId], references: [id], onDelete: Restrict)
+  progressNotes ProgressNote[]
+
+  @@index([measuredAt])
+  @@index([clientId])
+  @@map("body_measurements")
+}
+
+// ─── Progress Notes ────────────────────────────────────────────────────────────
+
+model ProgressNote {
+  id            String           @id @default(cuid())
+  measurementId String?
+  clientId      String
+  ownerId       String
+  noteType      ProgressNoteType @default(GENERAL)
+  content       String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  measurement BodyMeasurement? @relation(fields: [measurementId], references: [id], onDelete: SetNull)
+  client      User             @relation("ProgressNoteClient", fields: [clientId], references: [id], onDelete: Restrict)
+  owner       User             @relation("ProgressNoteOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([clientId])
+  @@map("progress_notes")
+}
+
+// ─── Fitness Reference Ranges ──────────────────────────────────────────────────
+
+/// Configurable reference ranges for interpreting fitness metrics (admin-editable).
+model FitnessReferenceRange {
+  id             String   @id @default(cuid())
+  metricName     String
+  gender         Gender?
+  ageMin         Int?
+  ageMax         Int?
+  minValue       Decimal? @db.Decimal(10, 4)
+  maxValue       Decimal? @db.Decimal(10, 4)
+  unit           String
+  statusLabel    String
+  interpretation String
+  sourceName     String?
+  sourceUrl      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([metricName])
+  @@map("fitness_reference_ranges")
+}
+
+// ─── Wearable Integration Foundation ─────────────────────────────────────────
+
+/// Wearable device connection per client (integration not implemented yet).
+model WearableConnection {
+  id             String                   @id @default(cuid())
+  clientId       String
+  provider       WearableProvider
+  externalUserId String?
+  status         WearableConnectionStatus @default(DISCONNECTED)
+  connectedAt    DateTime?
+  disconnectedAt DateTime?
+  lastSyncAt     DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  client  User             @relation("WearableConnectionClient", fields: [clientId], references: [id], onDelete: Restrict)
+  metrics WearableMetric[]
+
+  @@index([clientId])
+  @@index([status])
+  @@map("wearable_connections")
+}
+
+model WearableMetric {
+  id                   String             @id @default(cuid())
+  clientId             String
+  wearableConnectionId String?
+  metricType           WearableMetricType
+  value                Decimal            @db.Decimal(12, 4)
+  unit                 String
+  recordedAt           DateTime
+  source               WearableProvider
+  rawPayload           Json?
+  createdAt            DateTime           @default(now())
+
+  client             User                @relation("WearableMetricClient", fields: [clientId], references: [id], onDelete: Restrict)
+  wearableConnection WearableConnection? @relation(fields: [wearableConnectionId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([recordedAt])
+  @@map("wearable_metrics")
+}
+
+// ─── Schedule & Bookings ───────────────────────────────────────────────────────
+
+/// Owner-defined availability slots for private sessions.
+model ScheduleSlot {
+  id         String             @id @default(cuid())
+  ownerId    String
+  startTime  DateTime
+  endTime    DateTime
+  status     ScheduleSlotStatus @default(AVAILABLE)
+  maxClients Int                @default(1)
+  notes      String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  owner    User      @relation("ScheduleSlotOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  bookings Booking[]
+
+  @@index([ownerId])
+  @@index([startTime])
+  @@map("schedule_slots")
+}
+
+/// Booking requests and confirmed sessions. Preserved historically via status.
+model Booking {
+  id                 String             @id @default(cuid())
+  clientId           String
+  ownerId            String
+  scheduleSlotId     String?
+  startTime          DateTime
+  endTime            DateTime
+  status             BookingStatus      @default(REQUESTED)
+  requestedBy        BookingRequestedBy
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  cancellationReason String?
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  client       User          @relation("BookingClient", fields: [clientId], references: [id], onDelete: Restrict)
+  owner        User          @relation("BookingOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  scheduleSlot ScheduleSlot? @relation(fields: [scheduleSlotId], references: [id], onDelete: SetNull)
+  workoutSessions WorkoutSession[]
+
+  @@index([status])
+  @@index([startTime])
+  @@index([clientId])
+  @@map("bookings")
+}
+
+// ─── Workouts ──────────────────────────────────────────────────────────────────
+
+model ExerciseCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workoutSessions WorkoutSession[]
+
+  @@map("exercise_categories")
+}
+
+model WorkoutSession {
+  id               String           @id @default(cuid())
+  clientId         String
+  ownerId          String
+  bookingId        String?
+  sessionDate      DateTime
+  durationMinutes  Int
+  categoryId       String?
+  intensity        WorkoutIntensity @default(MEDIUM)
+  caloriesBurned   Int?
+  clientFeedback   String?
+  coachNotes       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  client   User              @relation("WorkoutSessionClient", fields: [clientId], references: [id], onDelete: Restrict)
+  owner    User              @relation("WorkoutSessionOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  booking  Booking?          @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  category ExerciseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  exercises WorkoutExercise[]
+
+  @@index([clientId])
+  @@index([sessionDate])
+  @@map("workout_sessions")
+}
+
+model WorkoutExercise {
+  id               String   @id @default(cuid())
+  workoutSessionId String
+  name             String
+  sets             Int?
+  reps             Int?
+  weightKg         Decimal? @db.Decimal(6, 2)
+  durationMinutes  Int?
+  distanceKm       Decimal? @db.Decimal(6, 2)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  workoutSession WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+
+  @@index([workoutSessionId])
+  @@map("workout_exercises")
+}
+
+// ─── Audit Log ─────────────────────────────────────────────────────────────────
+
+/// Immutable audit trail for owner/admin actions.
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  status    NotificationStatus @default(UNREAD)
+  createdAt DateTime           @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@map("notifications")
+}
