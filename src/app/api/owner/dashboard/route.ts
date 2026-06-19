@@ -1,0 +1,13 @@
+import { handleApiError, successResponse } from "@/lib/api-response";
+import { requireOwner } from "@/server/auth/require-owner";
+import { getOwnerDashboardSummary } from "@/server/services/dashboard.service";
+
+export async function GET() {
+  try {
+    await requireOwner();
+    const data = await getOwnerDashboardSummary();
+    return successResponse(data);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
