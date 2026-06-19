@@ -23,9 +23,12 @@ async function hashPassword(plain: string): Promise<string> {
 }
 
 async function main() {
-  const ownerPassword = process.env.SEED_OWNER_PASSWORD ?? "ChangeMe_Owner123!";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe_Admin123!";
-  const clientPassword = process.env.SEED_CLIENT_PASSWORD ?? "ChangeMe_Client123!";
+  const ownerEmail = process.env.SEED_OWNER_EMAIL ?? "anwargreige@afc.com";
+  const ownerPassword = process.env.SEED_OWNER_PASSWORD ?? "1234";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@afc.com";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "1234";
+  const clientEmail = process.env.SEED_CLIENT_EMAIL ?? "client@afc.com";
+  const clientPassword = process.env.SEED_CLIENT_PASSWORD ?? "1234";
 
   const [ownerHash, adminHash, clientHash] = await Promise.all([
     hashPassword(ownerPassword),
@@ -39,7 +42,9 @@ async function main() {
 
   const business = await prisma.business.upsert({
     where: { id: "seed-business-adrenaline" },
-    update: {},
+    update: {
+      name: "Adrenaline Fitness Center",
+    },
     create: {
       id: "seed-business-adrenaline",
       name: "Adrenaline Fitness Center",
@@ -56,12 +61,18 @@ async function main() {
   // ─── Owner users ───────────────────────────────────────────────────────────
 
   const gymOwner = await prisma.user.upsert({
-    where: { email: "owner@adrenalinefitness.lb" },
-    update: {},
+    where: { email: ownerEmail },
+    update: {
+      fullName: "Anwar Greige",
+      phoneNumber: "+96100000001",
+      passwordHash: ownerHash,
+      role: UserRole.OWNER,
+      status: UserStatus.ACTIVE,
+    },
     create: {
-      fullName: "Karim Nassar",
-      email: "owner@adrenalinefitness.lb",
-      phoneNumber: "+961 70 111 222",
+      fullName: "Anwar Greige",
+      email: ownerEmail,
+      phoneNumber: "+96100000001",
       passwordHash: ownerHash,
       role: UserRole.OWNER,
       status: UserStatus.ACTIVE,
@@ -69,12 +80,18 @@ async function main() {
   });
 
   const developerAdmin = await prisma.user.upsert({
-    where: { email: "admin@adrenalinefitness.lb" },
-    update: {},
+    where: { email: adminEmail },
+    update: {
+      fullName: "Admin Developer",
+      phoneNumber: "+96100000002",
+      passwordHash: adminHash,
+      role: UserRole.OWNER,
+      status: UserStatus.ACTIVE,
+    },
     create: {
-      fullName: "Samer Developer",
-      email: "admin@adrenalinefitness.lb",
-      phoneNumber: "+961 70 999 888",
+      fullName: "Admin Developer",
+      email: adminEmail,
+      phoneNumber: "+96100000002",
       passwordHash: adminHash,
       role: UserRole.OWNER,
       status: UserStatus.ACTIVE,
@@ -97,7 +114,13 @@ async function main() {
     planDefinitions.map((plan) =>
       prisma.plan.upsert({
         where: { id: `seed-plan-${plan.sessionsPerWeek}x` },
-        update: {},
+        update: {
+          name: `${plan.sessionsPerWeek} private sessions/week`,
+          sessionsPerWeek: plan.sessionsPerWeek,
+          monthlyPrice: plan.monthlyPrice,
+          currency: "USD",
+          isActive: true,
+        },
         create: {
           id: `seed-plan-${plan.sessionsPerWeek}x`,
           name: `${plan.sessionsPerWeek} private sessions/week`,
@@ -129,7 +152,9 @@ async function main() {
     categoryNames.map((name) =>
       prisma.exerciseCategory.upsert({
         where: { name },
-        update: {},
+        update: {
+          description: `${name} exercises and programming.`,
+        },
         create: {
           name,
           description: `${name} exercises and programming.`,
@@ -143,12 +168,18 @@ async function main() {
   // ─── Sample client ─────────────────────────────────────────────────────────
 
   const sampleClient = await prisma.user.upsert({
-    where: { email: "layla.haddad@example.com" },
-    update: {},
+    where: { email: clientEmail },
+    update: {
+      fullName: "Test Client",
+      phoneNumber: "+96100000003",
+      passwordHash: clientHash,
+      role: UserRole.CLIENT,
+      status: UserStatus.ACTIVE,
+    },
     create: {
-      fullName: "Layla Haddad",
-      email: "layla.haddad@example.com",
-      phoneNumber: "+961 76 555 123",
+      fullName: "Test Client",
+      email: clientEmail,
+      phoneNumber: "+96100000003",
       passwordHash: clientHash,
       role: UserRole.CLIENT,
       status: UserStatus.ACTIVE,
@@ -159,13 +190,16 @@ async function main() {
 
   await prisma.clientProfile.upsert({
     where: { userId: sampleClient.id },
-    update: {},
+    update: {
+      assignedPlanId: assignedPlan.id,
+      status: ClientStatus.ACTIVE,
+    },
     create: {
       userId: sampleClient.id,
       dateOfBirth: new Date("1992-04-15"),
       gender: Gender.FEMALE,
       heightCm: 165,
-      emergencyContactName: "Rania Haddad",
+      emergencyContactName: "Emergency Contact",
       emergencyContactPhone: "+961 70 444 555",
       fitnessGoal: "Improve strength and body composition over 6 months.",
       medicalNotes: "No known conditions. Cleared for moderate-intensity training.",
@@ -178,7 +212,7 @@ async function main() {
     },
   });
 
-  console.log(`  Client: ${sampleClient.fullName}`);
+  console.log(`  Client: ${sampleClient.fullName} (${clientEmail})`);
 
   // ─── Sample subscription ───────────────────────────────────────────────────
 
@@ -186,10 +220,15 @@ async function main() {
   const nextBilling = new Date("2025-12-01");
 
   const subscription = await prisma.subscription.upsert({
-    where: { id: "seed-subscription-layla" },
-    update: {},
+    where: { id: "seed-subscription-client" },
+    update: {
+      clientId: sampleClient.id,
+      planId: assignedPlan.id,
+      status: SubscriptionStatus.ACTIVE,
+      autoRenew: true,
+    },
     create: {
-      id: "seed-subscription-layla",
+      id: "seed-subscription-client",
       clientId: sampleClient.id,
       planId: assignedPlan.id,
       startDate: subscriptionStart,
@@ -200,15 +239,20 @@ async function main() {
     },
   });
 
-  console.log(`  Subscription: ${assignedPlan.name}`);
+  console.log(`  Subscription: ${assignedPlan.name} (${subscription.status})`);
 
   // ─── Sample payment ────────────────────────────────────────────────────────
 
   const payment = await prisma.payment.upsert({
-    where: { id: "seed-payment-layla-nov" },
-    update: {},
+    where: { id: "seed-payment-client-nov" },
+    update: {
+      clientId: sampleClient.id,
+      subscriptionId: subscription.id,
+      amount: assignedPlan.monthlyPrice,
+      status: PaymentStatus.PAID,
+    },
     create: {
-      id: "seed-payment-layla-nov",
+      id: "seed-payment-client-nov",
       clientId: sampleClient.id,
       subscriptionId: subscription.id,
       amount: assignedPlan.monthlyPrice,
@@ -226,10 +270,12 @@ async function main() {
   // ─── Sample body measurement ───────────────────────────────────────────────
 
   const bodyMeasurement = await prisma.bodyMeasurement.upsert({
-    where: { id: "seed-measurement-layla-1" },
-    update: {},
+    where: { id: "seed-measurement-client-1" },
+    update: {
+      clientId: sampleClient.id,
+    },
     create: {
-      id: "seed-measurement-layla-1",
+      id: "seed-measurement-client-1",
       clientId: sampleClient.id,
       measuredAt: new Date("2025-11-05T10:30:00.000Z"),
       weightKg: 62.4,
@@ -256,10 +302,13 @@ async function main() {
   const slotEnd = new Date("2025-11-10T09:00:00.000Z");
 
   const scheduleSlot = await prisma.scheduleSlot.upsert({
-    where: { id: "seed-slot-karim-morning" },
-    update: {},
+    where: { id: "seed-slot-owner-morning" },
+    update: {
+      ownerId: gymOwner.id,
+      status: ScheduleSlotStatus.BOOKED,
+    },
     create: {
-      id: "seed-slot-karim-morning",
+      id: "seed-slot-owner-morning",
       ownerId: gymOwner.id,
       startTime: slotStart,
       endTime: slotEnd,
@@ -270,10 +319,15 @@ async function main() {
   });
 
   const booking = await prisma.booking.upsert({
-    where: { id: "seed-booking-layla-1" },
-    update: {},
+    where: { id: "seed-booking-client-1" },
+    update: {
+      clientId: sampleClient.id,
+      ownerId: gymOwner.id,
+      scheduleSlotId: scheduleSlot.id,
+      status: BookingStatus.APPROVED,
+    },
     create: {
-      id: "seed-booking-layla-1",
+      id: "seed-booking-client-1",
       clientId: sampleClient.id,
       ownerId: gymOwner.id,
       scheduleSlotId: scheduleSlot.id,
@@ -289,10 +343,10 @@ async function main() {
   console.log(`  Booking: ${booking.status} on ${booking.startTime.toISOString()}`);
 
   console.log("\nSeed completed successfully.");
-  console.log("\nSample credentials (change in production):");
-  console.log(`  Owner:   owner@adrenalinefitness.lb / ${ownerPassword}`);
-  console.log(`  Admin:   admin@adrenalinefitness.lb / ${adminPassword}`);
-  console.log(`  Client:  layla.haddad@example.com / ${clientPassword}`);
+  console.log("\nLocal test credentials:");
+  console.log(`  Owner:  ${ownerEmail} / (password from SEED_OWNER_PASSWORD)`);
+  console.log(`  Admin:  ${adminEmail} / (password from SEED_ADMIN_PASSWORD)`);
+  console.log(`  Client: ${clientEmail} / (password from SEED_CLIENT_PASSWORD)`);
 }
 
 main()
