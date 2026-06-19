@@ -157,7 +157,7 @@ async function main() {
 
   const assignedPlan = plans.find((p) => p.sessionsPerWeek === 3)!;
 
-  const clientProfile = await prisma.clientProfile.upsert({
+  await prisma.clientProfile.upsert({
     where: { userId: sampleClient.id },
     update: {},
     create: {
