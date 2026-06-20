@@ -1,9 +1,16 @@
+import { UserStatus } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { UserStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { loginSchema } from "@/server/validations/auth.validation";
+
+const FROZEN_ACCOUNT_MESSAGE =
+  "Your account is frozen. Please contact the coach.";
+
+function isLoginAllowed(status: UserStatus): boolean {
+  return status === UserStatus.ACTIVE;
+}
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -58,15 +65,15 @@ export const authOptions: NextAuthOptions = {
           });
         }
 
-        if (!user) {
+        if (!user || !passwordMatches) {
           return null;
         }
 
-        if (user.status !== UserStatus.ACTIVE) {
-          return null;
+        if (user.status === UserStatus.FROZEN) {
+          throw new Error(FROZEN_ACCOUNT_MESSAGE);
         }
 
-        if (!passwordMatches) {
+        if (!isLoginAllowed(user.status)) {
           return null;
         }
 
@@ -107,3 +114,5 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+export { FROZEN_ACCOUNT_MESSAGE, isLoginAllowed };
