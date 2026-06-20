@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/Badge";
+import { StatusMeter } from "@/components/ui/StatusMeter";
 
 type StatAccent = "neutral" | "success" | "danger" | "accent";
 
@@ -12,9 +12,23 @@ interface StatCardProps {
 
 const valueColor: Record<StatAccent, string> = {
   neutral: "text-afc-white",
-  success: "text-afc-green",
-  danger: "text-afc-red",
+  success: "text-afc-green-neon",
+  danger: "text-afc-red-hot",
   accent: "text-afc-white",
+};
+
+const meterTone: Record<StatAccent, "success" | "danger" | "accent" | "neutral"> = {
+  neutral: "neutral",
+  success: "success",
+  danger: "danger",
+  accent: "accent",
+};
+
+const meterValue: Record<StatAccent, number> = {
+  neutral: 55,
+  success: 92,
+  danger: 38,
+  accent: 78,
 };
 
 const cornerClass: Record<StatAccent, string> = {
@@ -33,45 +47,26 @@ export function StatCard({
 }: StatCardProps) {
   if (loading) {
     return (
-      <div className="afc-surface animate-pulse p-5 sm:p-6">
-        <div className="mb-4 h-2 w-10 rounded-full bg-afc-border-grey/50" />
-        <div className="mb-3 h-3 w-24 rounded bg-afc-border-grey/40" />
-        <div className="h-10 w-28 rounded bg-afc-border-grey/40" />
+      <div className="afc-stat-tile animate-pulse">
+        <div className="mb-3 h-2 w-16 rounded bg-afc-panel-2/80" />
+        <div className="mb-3 h-3 w-24 rounded bg-afc-panel-2/60" />
+        <div className="h-10 w-28 rounded bg-afc-panel-2/60" />
       </div>
     );
   }
 
   return (
-    <div className="afc-surface afc-surface--hover relative overflow-hidden p-5 sm:p-6">
+    <div className="afc-stat-tile afc-stat-tile--hover relative overflow-hidden">
       {cornerClass[accent] ? (
         <div className={cornerClass[accent]} aria-hidden />
       ) : null}
       <div className="relative z-[1]">
-        <div className="mb-4 flex items-center gap-2">
-          <span
-            className={`h-1.5 w-8 rounded-full ${
-              accent === "success"
-                ? "bg-afc-green"
-                : accent === "danger"
-                  ? "bg-afc-red"
-                  : accent === "accent"
-                    ? "bg-gradient-to-r from-afc-red to-afc-panel-grey"
-                    : "bg-afc-border-grey"
-            }`}
-            aria-hidden
-          />
-        </div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-afc-soft-grey">
-          {label}
-        </p>
-        <p
-          className={`mt-2 text-3xl font-bold tracking-tight tabular-nums sm:text-[2rem] ${valueColor[accent]}`}
-        >
-          {value}
-        </p>
+        <p className="afc-stat-tile__label">{label}</p>
+        <p className={`afc-stat-tile__value ${valueColor[accent]}`}>{value}</p>
         {hint ? (
-          <p className="mt-2 text-xs leading-relaxed text-afc-soft-grey">{hint}</p>
+          <p className="mt-2 text-xs leading-relaxed text-afc-muted">{hint}</p>
         ) : null}
+        <StatusMeter tone={meterTone[accent]} value={meterValue[accent]} />
       </div>
     </div>
   );
@@ -83,17 +78,21 @@ interface GrowthBadgeProps {
 
 export function GrowthTrendBadge({ trend }: GrowthBadgeProps) {
   const config = {
-    INCREASING: { variant: "success" as const, label: "Increasing" },
+    INCREASING: { variant: "success" as const, label: "Rising" },
     STABLE: { variant: "neutral" as const, label: "Stable" },
-    DECLINING: { variant: "danger" as const, label: "Declining" },
+    DECLINING: { variant: "danger" as const, label: "Cooling" },
   }[trend];
 
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return (
+    <span className="inline-flex items-center rounded-md border border-afc-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-afc-silver">
+      {config.label}
+    </span>
+  );
 }
 
-export function LiveStatusBadge({ label = "Connected" }: { label?: string }) {
+export function LiveStatusBadge({ label = "LIVE" }: { label?: string }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-afc-green/30 bg-afc-green/10 px-3 py-1 text-xs font-semibold text-afc-green">
+    <span className="inline-flex items-center gap-2 rounded-sm border border-afc-green/40 bg-afc-green/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-afc-green-neon">
       <span className="afc-status-pulse" aria-hidden />
       {label}
     </span>

@@ -33,6 +33,10 @@ export async function getClientMe(userId: string) {
     upcomingBookings,
     unreadNotifications,
     notifications,
+    recentPayments,
+    recentBodyMeasurements,
+    recentBookings,
+    progressNotes,
   ] = await Promise.all([
     prisma.subscription.findFirst({
       where: { clientId: userId, status: SubscriptionStatus.ACTIVE },
@@ -50,7 +54,7 @@ export async function getClientMe(userId: string) {
     prisma.booking.findMany({
       where: {
         clientId: userId,
-        status: BookingStatus.APPROVED,
+        status: { in: [BookingStatus.APPROVED, BookingStatus.REQUESTED] },
         startTime: { gte: new Date() },
       },
       orderBy: { startTime: "asc" },
@@ -58,6 +62,26 @@ export async function getClientMe(userId: string) {
     }),
     countUnreadNotifications(userId),
     listUserNotifications(userId),
+    prisma.payment.findMany({
+      where: { clientId: userId },
+      orderBy: { dueDate: "desc" },
+      take: 5,
+    }),
+    prisma.bodyMeasurement.findMany({
+      where: { clientId: userId },
+      orderBy: { measuredAt: "desc" },
+      take: 5,
+    }),
+    prisma.booking.findMany({
+      where: { clientId: userId },
+      orderBy: { startTime: "desc" },
+      take: 10,
+    }),
+    prisma.progressNote.findMany({
+      where: { clientId: userId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
   ]);
 
   return {
@@ -67,7 +91,12 @@ export async function getClientMe(userId: string) {
     activeSubscription,
     latestPayment,
     latestBodyMeasurement: latestMeasurement,
+    coachAssessment: latestMeasurement?.coachAssessment ?? null,
     upcomingBookings,
+    recentBookings,
+    recentPayments,
+    recentBodyMeasurements,
+    progressNotes,
     unreadNotificationsCount: unreadNotifications,
     notifications,
   };

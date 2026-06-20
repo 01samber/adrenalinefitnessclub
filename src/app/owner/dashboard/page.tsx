@@ -5,6 +5,7 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
 import { GrowthTrendBadge, LiveStatusBadge, StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
@@ -68,20 +69,28 @@ function OwnerDashboardContent() {
 
   return (
     <AppShell
-      title="Owner Dashboard"
-      subtitle="Performance overview for Adrenaline Fitness Center"
+      title="Club Control Center"
+      subtitle="Live performance data from Adrenaline Fitness Center"
       sidebarItems={ownerSidebarItems}
-      brandSubtitle="Owner Portal"
+      brandSubtitle="Coach Mode"
     >
       {error ? (
         <ErrorState message={error} onRetry={handleRetry} />
       ) : (
         <div className="space-y-6">
+          <ScoreboardHeader
+            kicker="AFC Club OS"
+            title="Club Control Center"
+            subtitle="Membership, payments, and squad performance at a glance."
+            live
+            badge={<LiveStatusBadge label="LIVE CLUB DATA" />}
+          />
+
           <Card
             variant="elevated"
             accent="green"
-            title="Live Backend Connection"
-            subtitle="Neon PostgreSQL synced · operational command center online"
+            title="Live backend connection"
+            subtitle="Neon PostgreSQL synced · command center online"
             headerAction={<LiveStatusBadge />}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -95,30 +104,28 @@ function OwnerDashboardContent() {
           </Card>
 
           <div>
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-afc-soft-grey">
-              Operations pulse
-            </h2>
+            <h2 className="afc-section-label mb-4">Performance pulse</h2>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             <StatCard
-              label="Total Clients"
+              label="Squad size"
               value={data?.totalClients ?? 0}
               accent="neutral"
               loading={loading}
             />
             <StatCard
-              label="Active Clients"
+              label="Active athletes"
               value={data?.activeClients ?? 0}
               accent="success"
               loading={loading}
             />
             <StatCard
-              label="Frozen Clients"
+              label="Frozen roster"
               value={data?.frozenClients ?? 0}
               accent="danger"
               loading={loading}
             />
             <StatCard
-              label="Revenue This Month"
+              label="Monthly score"
               value={
                 loading ? "—" : formatCurrency(data?.totalRevenueThisMonth ?? 0)
               }
@@ -126,32 +133,32 @@ function OwnerDashboardContent() {
               loading={loading}
             />
             <StatCard
-              label="Unpaid Payments"
+              label="Payment alerts"
               value={data?.unpaidPaymentsCount ?? 0}
               accent="danger"
               loading={loading}
             />
             <StatCard
-              label="Overdue Payments"
+              label="Overdue"
               value={data?.overduePaymentsCount ?? 0}
               accent="danger"
               loading={loading}
             />
             <StatCard
-              label="Upcoming Bookings"
+              label="Upcoming sessions"
               value={data?.upcomingBookingsCount ?? 0}
               accent="accent"
               loading={loading}
             />
             <StatCard
-              label="Completed Sessions"
+              label="Completed sessions"
               value={data?.completedBookingsThisMonth ?? 0}
               hint="This month"
               accent="neutral"
               loading={loading}
             />
             <StatCard
-              label="New Clients This Month"
+              label="New sign-ups"
               value={data?.newClientsThisMonth ?? 0}
               accent="success"
               loading={loading}
@@ -164,8 +171,8 @@ function OwnerDashboardContent() {
               variant="glass"
               accent="green"
               hover
-              title="Membership momentum"
-              subtitle="Client growth trend based on new sign-ups this month"
+              title="Squad momentum"
+              subtitle="Athlete growth trend based on new sign-ups this month"
               headerAction={<GrowthTrendBadge trend={data.clientGrowthTrend} />}
             />
           ) : null}

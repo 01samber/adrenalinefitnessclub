@@ -45,9 +45,11 @@ export default function UnauthorizedPage() {
           >
             ⛔
           </div>
-          <h1 className="text-2xl font-bold text-afc-white">Access denied</h1>
-          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-afc-soft-grey">
-            You do not have permission to access this page.
+          <h1 className="text-2xl font-black uppercase tracking-tight text-afc-white">
+            Access denied
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-afc-muted">
+            You do not have clearance for this zone of the club operating system.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link href={homeHref} className="w-full sm:w-auto">

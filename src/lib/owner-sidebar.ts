@@ -1,15 +1,15 @@
 import type { SidebarItem } from "@/components/layout/Sidebar";
 
 export const ownerSidebarItems: SidebarItem[] = [
-  { label: "Dashboard", href: "/owner/dashboard" },
-  { label: "Clients", href: "/owner/clients" },
-  { label: "Payments", href: "/owner/payments", disabled: true, badge: "Soon" },
-  { label: "Bookings", href: "/owner/bookings", disabled: true, badge: "Soon" },
+  { label: "Control Center", href: "/owner/dashboard" },
+  { label: "Squad", href: "/owner/clients" },
+  { label: "Revenue", href: "/owner/payments", disabled: true, badge: "Soon" },
+  { label: "Sessions", href: "/owner/bookings", disabled: true, badge: "Soon" },
   {
-    label: "Measurements",
+    label: "Progress",
     href: "/owner/measurements",
     disabled: true,
     badge: "Soon",
   },
-  { label: "Reports", href: "/owner/reports", disabled: true, badge: "Soon" },
+  { label: "Analytics", href: "/owner/reports", disabled: true, badge: "Soon" },
 ];

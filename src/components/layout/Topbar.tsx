@@ -40,7 +40,7 @@ function UserChip({ compact = false }: { compact?: boolean }) {
 
 export function Topbar({ title, subtitle, onMenuOpen }: TopbarProps) {
   return (
-    <header className="afc-glass sticky top-0 z-30 border-b border-afc-border-grey/70">
+    <header className="afc-topbar-scoreboard afc-glass sticky top-0 z-30 backdrop-blur-md">
       <div className="relative px-4 py-3 sm:px-6 lg:px-8">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-afc-red/50 to-transparent"
@@ -67,11 +67,11 @@ export function Topbar({ title, subtitle, onMenuOpen }: TopbarProps) {
             </div>
 
             <div className="min-w-0">
-              <h1 className="truncate text-base font-bold tracking-tight text-afc-white sm:text-xl lg:text-2xl">
+              <h1 className="truncate text-base font-black uppercase tracking-tight text-afc-white sm:text-xl lg:text-2xl">
                 {title}
               </h1>
               {subtitle ? (
-                <p className="mt-0.5 truncate text-xs text-afc-soft-grey sm:text-sm">
+                <p className="mt-0.5 truncate text-xs font-medium text-afc-muted sm:text-sm">
                   {subtitle}
                 </p>
               ) : null}

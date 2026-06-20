@@ -83,15 +83,15 @@ export default function LoginPage() {
                 AFC
               </span>
             </div>
-            <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-afc-white xl:text-5xl">
+            <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-afc-white xl:text-5xl">
               Adrenaline Fitness Center
             </h1>
-            <p className="mt-5 text-xl font-medium text-afc-light-grey">
-              Your training business, organized with precision.
+            <p className="mt-5 text-xl font-bold uppercase tracking-wide text-afc-red-hot">
+              Enter the training arena.
             </p>
-            <p className="mt-4 text-base leading-relaxed text-afc-soft-grey">
-              Manage clients, bookings, payments, and performance from one
-              focused system built for coaches who demand clarity.
+            <p className="mt-4 text-base leading-relaxed text-afc-muted">
+              Manage performance, memberships, bookings, and progress from one
+              club operating system built for coaches who demand clarity.
             </p>
             <div className="mt-12 grid gap-3">
               <div className="afc-glass flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-afc-soft-grey">
@@ -113,11 +113,11 @@ export default function LoginPage() {
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-afc-red to-afc-red-dark" />
                 <span className="relative text-xs font-black text-afc-white">AFC</span>
               </div>
-              <h1 className="text-2xl font-bold text-afc-white">
+              <h1 className="text-2xl font-black uppercase tracking-tight text-afc-white">
                 Adrenaline Fitness Center
               </h1>
-              <p className="mt-2 text-sm text-afc-soft-grey">
-                Your training business, organized with precision.
+              <p className="mt-2 text-sm font-semibold text-afc-red-hot">
+                Enter the training arena.
               </p>
             </div>
 
@@ -125,8 +125,8 @@ export default function LoginPage() {
               <Card
                 accent="red"
                 variant="elevated"
-                title="Sign in"
-                subtitle="Owner or client dashboard access"
+                title="Club access"
+                subtitle="Coach or athlete portal sign-in"
                 className="rounded-[1.125rem] border-0 shadow-none"
               >
                 <form className="space-y-5" onSubmit={handleSubmit}>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                   ) : null}
 
                   <Button type="submit" fullWidth loading={loading} size="lg">
-                    {loading ? "Signing in..." : "Sign in"}
+                    {loading ? "Entering..." : "Enter arena"}
                   </Button>
                 </form>
               </Card>

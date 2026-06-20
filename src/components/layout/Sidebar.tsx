@@ -42,17 +42,17 @@ export function Sidebar({ items, brandSubtitle, open, onClose }: SidebarProps) {
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-afc-red via-afc-red-dark to-afc-panel-grey opacity-90" />
-                <div className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-afc-green shadow-[0_0_10px_var(--afc-green-glow)]" />
-                <span className="relative text-xs font-black tracking-tight text-afc-white">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-afc-red-hot via-afc-red to-afc-panel-2 opacity-95" style={{ clipPath: "polygon(0 0, 100% 0, 100% 75%, 75% 100%, 0 100%)" }} />
+                <div className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-afc-green-neon shadow-[0_0_10px_var(--afc-green-glow)]" />
+                <span className="relative text-xs font-black tracking-tighter text-afc-white">
                   AFC
                 </span>
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold tracking-tight text-afc-white">
+                <p className="truncate text-sm font-black uppercase tracking-wide text-afc-white">
                   Adrenaline Fitness
                 </p>
-                <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-afc-soft-grey">
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-afc-muted">
                   {brandSubtitle}
                 </p>
               </div>
@@ -69,8 +69,8 @@ export function Sidebar({ items, brandSubtitle, open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4">
-          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-afc-soft-grey/60">
-            Control Center
+          <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-[0.22em] text-afc-muted/70">
+            Tactical Menu
           </p>
           {items.map((item) => {
             const isActive = item.active ?? pathname === item.href;
@@ -114,13 +114,15 @@ export function Sidebar({ items, brandSubtitle, open, onClose }: SidebarProps) {
         <div className="border-t border-afc-border-grey/70 p-4">
           <div className="afc-surface afc-glass rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-afc-white">
-                Club OS
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-afc-white">
+                AFC Club OS
               </p>
               <span className="afc-status-pulse" aria-label="Live connection" />
             </div>
-            <p className="mt-2 text-xs text-afc-soft-grey">AFC System · Live backend</p>
-            <p className="mt-1 text-[10px] text-afc-green">Neon PostgreSQL synced</p>
+            <p className="mt-2 text-xs text-afc-muted">Live backend · Matchday ready</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-afc-green-neon">
+              Synced
+            </p>
           </div>
         </div>
       </aside>

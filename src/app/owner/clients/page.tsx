@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppShell } from "@/components/layout/AppShell";
@@ -89,27 +90,59 @@ function countByStatus(items: OwnerClientListItem[], status: string) {
   return items.filter((item) => item.user.status === status).length;
 }
 
-function ClientActions() {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <Button size="sm" variant="ghost" disabled title="Coming soon">
-        View
-      </Button>
-      <Button size="sm" variant="ghost" disabled title="Coming soon">
+function ClientActions({
+  clientId,
+  layout = "stacked",
+}: {
+  clientId: string;
+  layout?: "stacked" | "inline";
+}) {
+  const profileLink = (
+    <Link
+      href={`/owner/clients/${clientId}`}
+      className="inline-flex min-h-[36px] w-fit items-center justify-center rounded-lg border border-afc-red/30 bg-afc-red/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-afc-red-hot transition-colors hover:bg-afc-red/20 hover:text-afc-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afc-red"
+    >
+      Open Profile
+    </Link>
+  );
+
+  const secondaryActions = (
+    <div className="afc-roster-actions-secondary">
+      <Button size="sm" variant="ghost" disabled title="Coming soon" className="!min-h-[32px] !px-2 !text-xs">
         Edit
       </Button>
-      <Button size="sm" variant="ghost" disabled title="Coming soon">
+      <span className="text-xs text-afc-muted" aria-hidden>
+        ·
+      </span>
+      <Button size="sm" variant="ghost" disabled title="Coming soon" className="!min-h-[32px] !px-2 !text-xs">
         Freeze
       </Button>
+    </div>
+  );
+
+  if (layout === "inline") {
+    return (
+      <div className="afc-roster-actions-cell">
+        {profileLink}
+        {secondaryActions}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {profileLink}
+      {secondaryActions}
     </div>
   );
 }
 
 function ClientsTableSkeleton() {
   return (
-    <div className="hidden lg:block">
-      <div className="afc-surface overflow-hidden">
-        <div className="animate-pulse space-y-0">
+    <div className="hidden xl:block">
+      <div className="afc-surface afc-roster-board">
+        <div className="afc-roster-scroll">
+          <div className="animate-pulse space-y-0 min-w-[1120px]">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
@@ -121,6 +154,7 @@ function ClientsTableSkeleton() {
               <div className="h-4 w-28 rounded bg-afc-border-grey/30" />
             </div>
           ))}
+          </div>
         </div>
       </div>
     </div>
@@ -129,7 +163,7 @@ function ClientsTableSkeleton() {
 
 function ClientCardsSkeleton() {
   return (
-    <div className="space-y-4 lg:hidden">
+    <div className="space-y-4 xl:hidden">
       {Array.from({ length: 3 }).map((_, index) => (
         <div key={index} className="afc-surface animate-pulse p-5">
           <div className="mb-3 h-5 w-40 rounded bg-afc-border-grey/40" />
@@ -150,7 +184,7 @@ function ClientMobileCard({ client }: ClientRowProps) {
   const planName = assignedPlan?.name ?? "No plan assigned";
 
   return (
-    <article className="afc-surface afc-surface--hover p-5">
+    <article className="afc-squad-card afc-surface--hover">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-afc-white">
@@ -203,7 +237,7 @@ function ClientMobileCard({ client }: ClientRowProps) {
       </dl>
 
       <div className="mt-5 border-t border-afc-border-grey/60 pt-4">
-        <ClientActions />
+        <ClientActions clientId={user.id} />
       </div>
     </article>
   );
@@ -214,7 +248,7 @@ function ClientDesktopRow({ client }: ClientRowProps) {
   const planName = assignedPlan?.name ?? "—";
 
   return (
-    <tr className="border-b border-afc-border-grey/50 transition-colors last:border-b-0 hover:bg-white/[0.02]">
+    <tr className="afc-roster-row border-b border-afc-border-grey/50 last:border-b-0">
       <td className="px-5 py-4">
         <div className="min-w-0">
           <p className="font-semibold text-afc-white">{user.fullName}</p>
@@ -246,8 +280,8 @@ function ClientDesktopRow({ client }: ClientRowProps) {
       <td className="whitespace-nowrap px-4 py-4 text-sm text-afc-soft-grey">
         {formatDate(profile?.joinDate)}
       </td>
-      <td className="px-4 py-4">
-        <ClientActions />
+      <td className="afc-roster-actions whitespace-nowrap px-4 py-4">
+        <ClientActions clientId={user.id} layout="inline" />
       </td>
     </tr>
   );
@@ -347,12 +381,12 @@ function ClientsContent() {
 
   return (
     <AppShell
-      title="Clients"
-      subtitle="Manage gym members, subscriptions, and training progress."
+      title="Squad Management"
+      subtitle="Manage athletes, memberships, and training progress."
       sidebarItems={ownerSidebarItems}
-      brandSubtitle="Owner Portal"
+      brandSubtitle="Coach Mode"
     >
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="afc-glass inline-flex w-fit items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
             <span className="afc-status-pulse shrink-0" aria-hidden />
@@ -365,28 +399,28 @@ function ClientsContent() {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Total clients"
+            label="Squad size"
             value={pagination?.total ?? 0}
-            hint={hasFilters ? "Matching filters" : "All members"}
+            hint={hasFilters ? "Matching scout filters" : "Full roster"}
             accent="accent"
             loading={loading && !data}
           />
           <StatCard
-            label="Active clients"
+            label="Active athletes"
             value={activeOnPage}
             hint="On current page"
             accent="success"
             loading={loading && !data}
           />
           <StatCard
-            label="Frozen clients"
+            label="Frozen roster"
             value={frozenOnPage}
             hint="On current page"
             accent="danger"
             loading={loading && !data}
           />
           <StatCard
-            label="Showing results"
+            label="Scout results"
             value={showingLabel}
             hint={
               pagination
@@ -406,7 +440,7 @@ function ClientsContent() {
                   htmlFor="client-search"
                   className="text-sm font-medium text-afc-light-grey"
                 >
-                  Search clients
+                  Search squad
                 </label>
                 <input
                   id="client-search"
@@ -481,50 +515,60 @@ function ClientsContent() {
           />
         ) : (
           <>
-            <div className="hidden lg:block">
-              <div className="afc-surface overflow-x-auto">
-                <table className="afc-data-table w-full min-w-[64rem] text-left">
-                  <thead>
-                    <tr className="border-b border-afc-border-grey/70 bg-afc-black/30">
-                      <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Client
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Phone
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Status
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Assigned plan
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Active subscription
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Latest payment
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Latest measurement
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Join date
-                      </th>
-                      <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((client) => (
-                      <ClientDesktopRow key={client.user.id} client={client} />
-                    ))}
-                  </tbody>
-                </table>
+            <div className="hidden xl:block">
+              <div className="afc-surface afc-roster-board">
+                <p className="afc-roster-scroll-hint 2xl:hidden">
+                  Scroll sideways to view all roster details
+                </p>
+                <div
+                  className="afc-roster-scroll afc-scrollbar"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Squad roster table — scroll horizontally for all columns"
+                >
+                  <table className="afc-roster-table">
+                    <thead>
+                      <tr className="border-b border-afc-border-grey/70 bg-afc-black/30">
+                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Client
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Phone
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Status
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Assigned plan
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Active subscription
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Latest payment
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Latest measurement
+                        </th>
+                        <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Join date
+                        </th>
+                        <th className="afc-roster-actions-head px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((client) => (
+                        <ClientDesktopRow key={client.user.id} client={client} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4 lg:hidden">
+            <div className="space-y-4 xl:hidden">
               {items.map((client) => (
                 <ClientMobileCard key={client.user.id} client={client} />
               ))}
