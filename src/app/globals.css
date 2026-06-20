@@ -372,6 +372,16 @@ body {
   pointer-events: none;
 }
 
+/* ─── Data table ──────────────────────────────────────────────────────────── */
+
+.afc-data-table th {
+  white-space: nowrap;
+}
+
+.afc-data-table td {
+  vertical-align: middle;
+}
+
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
 
 .afc-scrollbar::-webkit-scrollbar {

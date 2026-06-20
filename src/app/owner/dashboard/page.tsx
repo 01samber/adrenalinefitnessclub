@@ -7,21 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { GrowthTrendBadge, LiveStatusBadge, StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
+import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import type { OwnerDashboardData } from "@/types/api";
-
-const ownerSidebarItems = [
-  { label: "Dashboard", href: "/owner/dashboard", active: true },
-  { label: "Clients", href: "/owner/clients", disabled: true, badge: "Soon" },
-  { label: "Payments", href: "/owner/payments", disabled: true, badge: "Soon" },
-  { label: "Bookings", href: "/owner/bookings", disabled: true, badge: "Soon" },
-  {
-    label: "Measurements",
-    href: "/owner/measurements",
-    disabled: true,
-    badge: "Soon",
-  },
-  { label: "Reports", href: "/owner/reports", disabled: true, badge: "Soon" },
-];
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {

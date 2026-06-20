@@ -1,5 +1,61 @@
 export type ClientGrowthTrend = "INCREASING" | "STABLE" | "DECLINING";
 
+export type UserStatusFilter = "ACTIVE" | "FROZEN" | "SUSPENDED" | "DELETED";
+
+export type ClientListStatusFilter = "" | "ACTIVE" | "FROZEN" | "INACTIVE" | "DELETED";
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}
+
+export interface MembershipPlan {
+  id: string;
+  name: string;
+  sessionsPerWeek: number;
+  monthlyPrice: string;
+  currency: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClientProfile {
+  id: string;
+  userId: string;
+  dateOfBirth: string;
+  gender: string;
+  heightCm: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  fitnessGoal: string;
+  medicalNotes: string | null;
+  injuries: string | null;
+  activityLevel: string;
+  joinDate: string;
+  coachNotes: string | null;
+  assignedPlanId: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  assignedPlan?: MembershipPlan | null;
+}
+
+export interface OwnerClientListItem {
+  user: SafeUser;
+  profile: ClientProfile | null;
+  assignedPlan: MembershipPlan | null;
+}
+
+export type OwnerClientsData = PaginatedResponse<OwnerClientListItem>;
+
 export interface OwnerDashboardData {
   totalClients: number;
   activeClients: number;
