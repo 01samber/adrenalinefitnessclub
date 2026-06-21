@@ -1135,6 +1135,306 @@ body {
   gap: 0.75rem;
 }
 
+/* ─── Add measurement modal ─────────────────────────────────────────────────── */
+
+.afc-measurement-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(225, 29, 46, 0.12), transparent 55%),
+    rgba(5, 5, 5, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.afc-measurement-modal__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 42rem);
+  max-height: min(92vh, 52rem);
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    165deg,
+    rgba(23, 28, 36, 0.98) 0%,
+    rgba(11, 14, 19, 0.99) 100%
+  );
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.afc-measurement-modal__accent {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--afc-red-dark) 0%,
+    var(--afc-red-hot) 50%,
+    var(--afc-green-neon) 100%
+  );
+}
+
+.afc-measurement-modal__header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-modal__kicker {
+  margin: 0;
+  color: var(--afc-green-neon);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-modal__title {
+  margin: 0;
+  color: var(--afc-white);
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.afc-measurement-modal__subtitle {
+  margin: 0;
+  color: var(--afc-silver);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.afc-measurement-modal__client {
+  margin: 0.25rem 0 0;
+  color: var(--afc-muted);
+  font-size: 0.875rem;
+}
+
+.afc-measurement-modal__error {
+  flex-shrink: 0;
+  margin: 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(225, 29, 46, 0.35);
+  background: rgba(225, 29, 46, 0.1);
+  color: #fecaca;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.afc-measurement-modal__form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.afc-measurement-form {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.afc-measurement-section {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.afc-measurement-section__title,
+.afc-measurement-section__toggle {
+  margin: 0 0 1rem;
+  color: var(--afc-white);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-section__toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.afc-measurement-section__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .afc-measurement-section__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.afc-measurement-textarea {
+  min-height: 6.5rem;
+  width: 100%;
+  resize: vertical;
+  border-radius: 0.75rem;
+  border: 1px solid var(--afc-border-grey);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.875rem 1rem;
+  color: var(--afc-white);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.afc-measurement-textarea:focus {
+  border-color: var(--afc-red);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.25);
+}
+
+.afc-measurement-textarea--error {
+  border-color: var(--afc-red);
+}
+
+.afc-measurement-modal__actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.afc-measurement-modal__actions button {
+  min-height: 44px;
+  min-width: 7.5rem;
+}
+
+.afc-measurement-history {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-history__title {
+  margin: 0 0 1rem;
+  color: var(--afc-soft-grey);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history__list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.afc-measurement-history-item {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 1rem;
+}
+
+.afc-measurement-history-item--latest {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.afc-measurement-history-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.afc-measurement-history-item__date {
+  margin: 0;
+  color: var(--afc-white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.afc-measurement-history-item__badge {
+  display: inline-flex;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  padding: 0.15rem 0.5rem;
+  color: var(--afc-green-neon);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history-item__weight {
+  margin: 0;
+  color: var(--afc-green-neon);
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.afc-measurement-history-item__metrics {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+}
+
+.afc-measurement-history-item__notes {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-history-item__label {
+  margin: 0;
+  color: var(--afc-soft-grey);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history-item__copy {
+  margin: 0.35rem 0 0;
+  color: var(--afc-light-grey);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
 /* ─── Athlete onboarding ──────────────────────────────────────────────────── */
 
 .afc-onboarding-stepper {

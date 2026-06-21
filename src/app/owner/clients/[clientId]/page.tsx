@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { AddMeasurementModal } from "@/components/owner/AddMeasurementModal";
 import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
@@ -19,6 +20,7 @@ import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import type {
   ClientBooking,
+  ClientMeasurement,
   ClientPayment,
   ClientProgressNote,
   ClientSubscription,
@@ -281,6 +283,66 @@ function ProgressNoteItem({ note }: { note: ClientProgressNote }) {
   );
 }
 
+function MeasurementHistoryItem({
+  measurement,
+  isLatest = false,
+}: {
+  measurement: ClientMeasurement;
+  isLatest?: boolean;
+}) {
+  return (
+    <article
+      className={`afc-measurement-history-item ${isLatest ? "afc-measurement-history-item--latest" : ""}`}
+    >
+      <div className="afc-measurement-history-item__header">
+        <div>
+          <p className="afc-measurement-history-item__date">
+            {formatDate(measurement.measuredAt)}
+          </p>
+          {isLatest ? (
+            <span className="afc-measurement-history-item__badge">Latest</span>
+          ) : null}
+        </div>
+        <p className="afc-measurement-history-item__weight">
+          {measurement.weightKg} kg
+        </p>
+      </div>
+
+      <div className="afc-measurement-history-item__metrics">
+        <DataRow
+          label="Body fat %"
+          value={
+            measurement.bodyFatPercentage
+              ? `${measurement.bodyFatPercentage}%`
+              : "—"
+          }
+        />
+        <DataRow
+          label="Muscle (kg)"
+          value={measurement.muscleKg ? `${measurement.muscleKg} kg` : "—"}
+        />
+        <DataRow label="BMI" value={measurement.bmi ?? "—"} />
+      </div>
+
+      {measurement.coachAssessment ? (
+        <div className="afc-measurement-history-item__notes">
+          <p className="afc-measurement-history-item__label">Coach assessment</p>
+          <p className="afc-measurement-history-item__copy">
+            {measurement.coachAssessment}
+          </p>
+        </div>
+      ) : null}
+
+      {measurement.notes ? (
+        <div className="afc-measurement-history-item__notes">
+          <p className="afc-measurement-history-item__label">Notes</p>
+          <p className="afc-measurement-history-item__copy">{measurement.notes}</p>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 function ClientDetailContent() {
   const params = useParams();
   const clientId = typeof params.clientId === "string" ? params.clientId : "";
@@ -290,6 +352,9 @@ function ClientDetailContent() {
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [measurementFormKey, setMeasurementFormKey] = useState(0);
 
   useEffect(() => {
     if (!clientId) return;
@@ -338,6 +403,11 @@ function ClientDetailContent() {
   }, [clientId, reloadKey]);
 
   const handleRetry = () => {
+    setReloadKey((key) => key + 1);
+  };
+
+  const handleMeasurementSuccess = (message: string) => {
+    setSuccessMessage(message);
     setReloadKey((key) => key + 1);
   };
 
@@ -438,6 +508,15 @@ function ClientDetailContent() {
               profileStatus={data.profile?.status}
               onStatusChanged={handleRetry}
             />
+
+            {successMessage ? (
+              <div
+                className="rounded-xl border border-afc-green/40 bg-afc-green/10 px-4 py-3 text-sm text-afc-green-neon"
+                role="status"
+              >
+                {successMessage}
+              </div>
+            ) : null}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
               <StatCard
@@ -644,66 +723,138 @@ function ClientDetailContent() {
               accent="green"
               title="Body composition snapshot"
               subtitle="Historical body composition values for coach tracking only."
+              headerAction={
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    setMeasurementFormKey((key) => key + 1);
+                    setMeasurementModalOpen(true);
+                  }}
+                >
+                  Add measurement
+                </Button>
+              }
             >
-              {latestMeasurement ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <DataRow
-                    label="Measured"
-                    value={formatDateTime(latestMeasurement.measuredAt)}
-                  />
-                  <DataRow
-                    label="Weight"
-                    value={`${latestMeasurement.weightKg} kg`}
-                  />
-                  <DataRow
-                    label="BMI"
-                    value={latestMeasurement.bmi ?? "—"}
-                  />
-                  <DataRow
-                    label="Body fat %"
-                    value={
-                      latestMeasurement.bodyFatPercentage
-                        ? `${latestMeasurement.bodyFatPercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Muscle %"
-                    value={
-                      latestMeasurement.musclePercentage
-                        ? `${latestMeasurement.musclePercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Water %"
-                    value={
-                      latestMeasurement.waterPercentage
-                        ? `${latestMeasurement.waterPercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Visceral fat"
-                    value={
-                      latestMeasurement.visceralFatKg
-                        ? `${latestMeasurement.visceralFatKg} kg`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="BMR"
-                    value={
-                      latestMeasurement.basalMetabolicRate
-                        ? String(latestMeasurement.basalMetabolicRate)
-                        : "—"
-                    }
-                  />
+              {data.measurements.length ? (
+                <div className="space-y-4">
+                  {latestMeasurement ? (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <DataRow
+                        label="Measured"
+                        value={formatDateTime(latestMeasurement.measuredAt)}
+                      />
+                      <DataRow
+                        label="Weight"
+                        value={`${latestMeasurement.weightKg} kg`}
+                      />
+                      <DataRow
+                        label="BMI"
+                        value={latestMeasurement.bmi ?? "—"}
+                      />
+                      <DataRow
+                        label="Body fat %"
+                        value={
+                          latestMeasurement.bodyFatPercentage
+                            ? `${latestMeasurement.bodyFatPercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Muscle (kg)"
+                        value={
+                          latestMeasurement.muscleKg
+                            ? `${latestMeasurement.muscleKg} kg`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Muscle %"
+                        value={
+                          latestMeasurement.musclePercentage
+                            ? `${latestMeasurement.musclePercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Water %"
+                        value={
+                          latestMeasurement.waterPercentage
+                            ? `${latestMeasurement.waterPercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Visceral fat"
+                        value={
+                          latestMeasurement.visceralFatKg
+                            ? `${latestMeasurement.visceralFatKg} kg`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="BMR"
+                        value={
+                          latestMeasurement.basalMetabolicRate
+                            ? String(latestMeasurement.basalMetabolicRate)
+                            : "—"
+                        }
+                      />
+                    </div>
+                  ) : null}
+
+                  {latestMeasurement?.coachAssessment ? (
+                    <div className="rounded-xl border border-afc-border-grey/70 bg-afc-black/25 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                        Coach assessment
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-afc-light-grey">
+                        {latestMeasurement.coachAssessment}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {latestMeasurement?.notes ? (
+                    <div className="rounded-xl border border-afc-border-grey/70 bg-afc-black/25 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                        Notes
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-afc-light-grey">
+                        {latestMeasurement.notes}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="afc-measurement-history">
+                    <h3 className="afc-measurement-history__title">
+                      Measurement history
+                    </h3>
+                    <div className="afc-measurement-history__list">
+                      {data.measurements.map((measurement, index) => (
+                        <MeasurementHistoryItem
+                          key={measurement.id}
+                          measurement={measurement}
+                          isLatest={index === 0}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <EmptyState message="No measurements recorded yet." />
               )}
             </Card>
+
+            <AddMeasurementModal
+              key={measurementFormKey}
+              open={measurementModalOpen}
+              clientId={data.user.id}
+              clientName={data.user.fullName}
+              profileHeightCm={data.profile?.heightCm}
+              onClose={() => setMeasurementModalOpen(false)}
+              onSuccess={handleMeasurementSuccess}
+            />
 
             <Card accent="neutral" title="Session history" hover>
               {data.bookings.length ? (

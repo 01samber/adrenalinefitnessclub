@@ -188,6 +188,47 @@ export interface OwnerClientDetail {
   progressNotes: ClientProgressNote[];
 }
 
+export type OwnerBodyMeasurement = {
+  id: string;
+  clientId: string;
+  measuredAt: string;
+  weightKg: number;
+  heightCmSnapshot: number;
+  bodyFatPercentage: number | null;
+  muscleKg: number | null;
+  chestCm: number | null;
+  waistCm: number | null;
+  hipsCm: number | null;
+  armsCm: number | null;
+  thighsCm: number | null;
+  coachAssessment: string | null;
+  notes: string | null;
+};
+
+export type CreateMeasurementInput = {
+  measuredAt?: string;
+  weightKg: number;
+  heightCmSnapshot?: number | null;
+  bodyFatPercentage?: number | null;
+  muscleKg?: number | null;
+  musclePercentage?: number | null;
+  waterPercentage?: number | null;
+  visceralFatKg?: number | null;
+  basalMetabolicRate?: number | null;
+  metabolicAge?: number | null;
+  chestCm?: number | null;
+  waistCm?: number | null;
+  hipsCm?: number | null;
+  armsCm?: number | null;
+  thighsCm?: number | null;
+  coachAssessment?: string;
+  notes?: string;
+};
+
+export type CreateMeasurementResponse = {
+  measurement: OwnerBodyMeasurement;
+};
+
 export interface OwnerClientStatusUpdate {
   user: SafeUser;
   profile: ClientProfile;
