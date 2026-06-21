@@ -48,10 +48,47 @@ export interface ClientProfile {
   assignedPlan?: MembershipPlan | null;
 }
 
+export interface OwnerClientListPlan {
+  id: string;
+  name: string;
+  sessionsPerWeek: number;
+  monthlyPrice: string;
+  currency: string;
+}
+
+export interface OwnerClientListActiveSubscription {
+  id: string;
+  status: string;
+  startDate: string;
+  endDate: string | null;
+  nextBillingDate: string;
+  plan: OwnerClientListPlan;
+}
+
+export interface OwnerClientListPayment {
+  id: string;
+  amount: string;
+  currency: string;
+  status: string;
+  paidAt: string | null;
+  dueDate: string;
+}
+
+export interface OwnerClientListMeasurement {
+  id: string;
+  measuredAt: string;
+  weightKg: number | null;
+  bodyFatPercentage: number | null;
+  muscleKg: number | null;
+}
+
 export interface OwnerClientListItem {
   user: SafeUser;
   profile: ClientProfile | null;
   assignedPlan: MembershipPlan | null;
+  activeSubscription: OwnerClientListActiveSubscription | null;
+  latestPayment: OwnerClientListPayment | null;
+  latestMeasurement: OwnerClientListMeasurement | null;
 }
 
 export type OwnerClientsData = PaginatedResponse<OwnerClientListItem>;

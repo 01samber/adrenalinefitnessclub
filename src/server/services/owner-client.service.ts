@@ -13,6 +13,12 @@ import {
   toSafeSubscriptionWithPlan,
   type SafeSubscriptionWithPlan,
 } from "@/server/services/plan.service";
+import {
+  firstRowPerClientId,
+  toSafeListActiveSubscription,
+  toSafeListMeasurement,
+  toSafeListPayment,
+} from "@/server/utils/owner-client-list.mapper";
 import type {
   ClientListQuery,
   CreateClientInput,
@@ -65,6 +71,64 @@ async function getActivePlanOrThrow(
   return plan;
 }
 
+async function loadClientListSummaries(clientIds: string[]) {
+  if (clientIds.length === 0) {
+    return {
+      activeSubscriptions: new Map<string, ReturnType<typeof toSafeListActiveSubscription>>(),
+      latestPayments: new Map<string, ReturnType<typeof toSafeListPayment>>(),
+      latestMeasurements: new Map<string, ReturnType<typeof toSafeListMeasurement>>(),
+    };
+  }
+
+  const [subscriptions, payments, measurements] = await Promise.all([
+    prisma.subscription.findMany({
+      where: {
+        clientId: { in: clientIds },
+        status: SubscriptionStatus.ACTIVE,
+      },
+      include: { plan: true },
+      orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
+    }),
+    prisma.payment.findMany({
+      where: { clientId: { in: clientIds } },
+      orderBy: [
+        { paymentDate: { sort: "desc", nulls: "last" } },
+        { dueDate: "desc" },
+        { createdAt: "desc" },
+      ],
+    }),
+    prisma.bodyMeasurement.findMany({
+      where: { clientId: { in: clientIds } },
+      orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }],
+    }),
+  ]);
+
+  const activeSubscriptions = new Map(
+    [...firstRowPerClientId(subscriptions).entries()].map(([clientId, sub]) => [
+      clientId,
+      toSafeListActiveSubscription(sub),
+    ]),
+  );
+
+  const latestPayments = new Map(
+    [...firstRowPerClientId(payments).entries()].map(([clientId, payment]) => [
+      clientId,
+      toSafeListPayment(payment),
+    ]),
+  );
+
+  const latestMeasurements = new Map(
+    [...firstRowPerClientId(measurements).entries()].map(
+      ([clientId, measurement]) => [
+        clientId,
+        toSafeListMeasurement(measurement),
+      ],
+    ),
+  );
+
+  return { activeSubscriptions, latestPayments, latestMeasurements };
+}
+
 export async function listClients(query: ClientListQuery) {
   const { page, limit, skip } = parsePagination(query);
 
@@ -76,6 +140,7 @@ export async function listClients(query: ClientListQuery) {
           OR: [
             { fullName: { contains: query.search, mode: "insensitive" as const } },
             { email: { contains: query.search, mode: "insensitive" as const } },
+            { phoneNumber: { contains: query.search, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -92,10 +157,17 @@ export async function listClients(query: ClientListQuery) {
     prisma.user.count({ where }),
   ]);
 
+  const clientIds = users.map((user) => user.id);
+  const { activeSubscriptions, latestPayments, latestMeasurements } =
+    await loadClientListSummaries(clientIds);
+
   const items = users.map((user) => ({
     user: toSafeUser(user),
     profile: user.clientProfile,
     assignedPlan: user.clientProfile?.assignedPlan ?? null,
+    activeSubscription: activeSubscriptions.get(user.id) ?? null,
+    latestPayment: latestPayments.get(user.id) ?? null,
+    latestMeasurement: latestMeasurements.get(user.id) ?? null,
   }));
 
   return paginate(items, page, limit, total);
