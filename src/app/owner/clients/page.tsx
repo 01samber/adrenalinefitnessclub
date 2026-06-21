@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ClientStatusActions } from "@/components/owner/ClientStatusActions";
 import { AppShell } from "@/components/layout/AppShell";
+import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/DataRow";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { StatCard } from "@/components/ui/StatCard";
+import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
+import { LiveStatusBadge, StatCard } from "@/components/ui/StatCard";
 import { Select } from "@/components/ui/Select";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
@@ -88,6 +90,28 @@ function statusBadgeVariant(
   }
 }
 
+function formatPlanPrice(monthlyPrice: string, currency: string) {
+  const amount = Number(monthlyPrice);
+  if (Number.isNaN(amount)) return `${currency} ${monthlyPrice}`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function getAssignedPlanLabel(client: OwnerClientListItem) {
+  return client.assignedPlan?.name ?? "—";
+}
+
+function getSubscriptionLabel(client: OwnerClientListItem) {
+  if (!client.assignedPlan) return "—";
+  return `${client.assignedPlan.sessionsPerWeek}× / week · ${formatPlanPrice(
+    client.assignedPlan.monthlyPrice,
+    client.assignedPlan.currency,
+  )}`;
+}
+
 function countByStatus(items: OwnerClientListItem[], status: string) {
   return items.filter((item) => item.user.status === status).length;
 }
@@ -120,7 +144,7 @@ function ClientCardsSkeleton() {
   return (
     <div className="space-y-4 xl:hidden">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="afc-surface animate-pulse p-5">
+        <div key={index} className="afc-squad-card afc-surface animate-pulse p-5">
           <div className="mb-3 h-5 w-40 rounded bg-afc-border-grey/40" />
           <div className="mb-2 h-4 w-56 rounded bg-afc-border-grey/30" />
           <div className="h-4 w-32 rounded bg-afc-border-grey/30" />
@@ -139,58 +163,61 @@ function ClientMobileCard({
   onStatusChanged,
 }: ClientRowProps & { onStatusChanged: (message: string) => void }) {
   const { user, profile, assignedPlan } = client;
-  const planName = assignedPlan?.name ?? "No plan assigned";
+  const planName = getAssignedPlanLabel(client);
+  const subscriptionLabel = getSubscriptionLabel(client);
+  const initial = user.fullName.charAt(0).toUpperCase();
 
   return (
-    <article className="afc-squad-card afc-surface--hover">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-afc-white">
-            {user.fullName}
-          </h3>
-          <p className="mt-1 truncate text-sm text-afc-soft-grey">{user.email}</p>
+    <article className="afc-squad-card afc-surface afc-surface--hover">
+      <div className="flex items-start gap-3">
+        <div className="afc-squad-card__avatar" aria-hidden>
+          {initial}
         </div>
-        <Badge variant={statusBadgeVariant(user.status)}>
-          {displayUserStatus(user.status)}
-        </Badge>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-semibold text-afc-white">
+                {user.fullName}
+              </h3>
+              <p className="mt-1 truncate text-sm text-afc-soft-grey">{user.email}</p>
+            </div>
+            <Badge variant={statusBadgeVariant(user.status)}>
+              {displayUserStatus(user.status)}
+            </Badge>
+          </div>
+        </div>
       </div>
 
-      <dl className="mt-4 space-y-2.5 text-sm">
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Phone</dt>
-          <dd className="text-right font-medium text-afc-white">
-            {user.phoneNumber ?? "—"}
-          </dd>
+      <dl className="afc-squad-card__stats mt-4">
+        <div>
+          <dt>Phone</dt>
+          <dd>{user.phoneNumber ?? "—"}</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Plan</dt>
-          <dd className="max-w-[55%] truncate text-right font-medium text-afc-white">
-            {planName}
-          </dd>
+        <div>
+          <dt>Assigned plan</dt>
+          <dd className="truncate">{planName}</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Subscription</dt>
+        <div>
+          <dt>Active subscription</dt>
           <dd>
-            <Badge variant="neutral">No data</Badge>
+            {assignedPlan ? (
+              <Badge variant="success">{subscriptionLabel}</Badge>
+            ) : (
+              <span className="text-afc-muted">—</span>
+            )}
           </dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Latest payment</dt>
-          <dd>
-            <Badge variant="neutral">No data</Badge>
-          </dd>
+        <div>
+          <dt>Latest payment</dt>
+          <dd className="text-afc-muted">—</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Latest measurement</dt>
-          <dd>
-            <Badge variant="neutral">No data</Badge>
-          </dd>
+        <div>
+          <dt>Latest measurement</dt>
+          <dd className="text-afc-muted">—</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-afc-soft-grey">Joined</dt>
-          <dd className="font-medium text-afc-white">
-            {formatDate(profile?.joinDate)}
-          </dd>
+        <div>
+          <dt>Joined</dt>
+          <dd>{formatDate(profile?.joinDate)}</dd>
         </div>
       </dl>
 
@@ -211,16 +238,21 @@ function ClientDesktopRow({
   onStatusChanged,
 }: ClientRowProps & { onStatusChanged: (message: string) => void }) {
   const { user, profile, assignedPlan } = client;
-  const planName = assignedPlan?.name ?? "—";
+  const planName = getAssignedPlanLabel(client);
 
   return (
     <tr className="afc-roster-row border-b border-afc-border-grey/50 last:border-b-0">
       <td className="px-5 py-4">
-        <div className="min-w-0">
-          <p className="font-semibold text-afc-white">{user.fullName}</p>
-          <p className="mt-0.5 truncate text-sm text-afc-soft-grey">
-            {user.email}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="afc-roster-row__avatar" aria-hidden>
+            {user.fullName.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-afc-white">{user.fullName}</p>
+            <p className="mt-0.5 truncate text-sm text-afc-soft-grey">
+              {user.email}
+            </p>
+          </div>
         </div>
       </td>
       <td className="px-4 py-4 text-sm text-afc-light-grey">
@@ -235,13 +267,17 @@ function ClientDesktopRow({
         <span className="line-clamp-2">{planName}</span>
       </td>
       <td className="px-4 py-4">
-        <Badge variant="neutral">No data</Badge>
+        {assignedPlan ? (
+          <Badge variant="success">{getSubscriptionLabel(client)}</Badge>
+        ) : (
+          <span className="text-sm text-afc-muted">—</span>
+        )}
       </td>
       <td className="px-4 py-4">
-        <Badge variant="neutral">No data</Badge>
+        <span className="text-sm text-afc-muted">—</span>
       </td>
       <td className="px-4 py-4">
-        <Badge variant="neutral">No data</Badge>
+        <span className="text-sm text-afc-muted">—</span>
       </td>
       <td className="whitespace-nowrap px-4 py-4 text-sm text-afc-soft-grey">
         {formatDate(profile?.joinDate)}
@@ -364,11 +400,21 @@ function ClientsContent() {
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
-      <div className="min-w-0 space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="afc-glass inline-flex w-fit items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
+      <div className="afc-clients-page min-w-0 space-y-6">
+        <div className="afc-clients-page__hero hidden min-[480px]:block">
+          <ScoreboardHeader
+            kicker="Coach command"
+            title="Squad Management"
+            subtitle="Manage athletes, memberships, and training progress."
+            live
+            badge={<LiveStatusBadge label="LIVE ROSTER" />}
+          />
+        </div>
+
+        <div className="afc-clients-page__live-chip">
+          <div className="afc-glass afc-live-chip inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
             <span className="afc-status-pulse shrink-0" aria-hidden />
-            <span className="text-xs text-afc-soft-grey">
+            <span className="truncate text-xs text-afc-soft-grey">
               Live data ·{" "}
               <code className="font-mono text-afc-green">GET /api/owner/clients</code>
             </span>
@@ -384,7 +430,9 @@ function ClientsContent() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <h2 className="afc-section-label mb-4">Squad pulse</h2>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Squad size"
             value={pagination?.total ?? 0}
@@ -417,9 +465,16 @@ function ClientsContent() {
             accent="neutral"
             loading={loading && !data}
           />
+          </div>
         </div>
 
-        <div className="afc-surface p-4 sm:p-5">
+        <Card
+          variant="elevated"
+          accent="red"
+          title="Scout & recruit"
+          subtitle="Filter the roster and add new athletes"
+          className="afc-clients-toolbar"
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="grid flex-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
@@ -435,7 +490,7 @@ function ClientsContent() {
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
                   placeholder="Name, email, or phone"
-                  className="min-h-[44px] w-full rounded-xl border border-afc-border-grey bg-afc-black/40 px-4 py-2.5 text-sm text-afc-white placeholder:text-afc-soft-grey/50 focus:border-afc-red focus:outline-none focus:ring-2 focus:ring-afc-red/25"
+                  className="afc-field-input"
                 />
               </div>
 
@@ -468,7 +523,7 @@ function ClientsContent() {
               </Link>
             </div>
           </div>
-        </div>
+        </Card>
 
         {error ? (
           <ErrorState message={error} onRetry={handleRefresh} />
@@ -488,6 +543,7 @@ function ClientsContent() {
         ) : (
           <>
             <div className="hidden xl:block">
+              <h2 className="afc-section-label mb-4">Active roster</h2>
               <div className="afc-surface afc-roster-board">
                 <p className="afc-roster-scroll-hint 2xl:hidden">
                   Scroll sideways to view all roster details
@@ -545,6 +601,7 @@ function ClientsContent() {
             </div>
 
             <div className="space-y-4 xl:hidden">
+              <h2 className="afc-section-label">Squad cards</h2>
               {items.map((client) => (
                 <ClientMobileCard
                   key={client.user.id}

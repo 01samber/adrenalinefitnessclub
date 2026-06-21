@@ -80,14 +80,14 @@ export function Topbar({ title, subtitle, mobileTitle, onMenuOpen }: TopbarProps
             </div>
           </div>
 
-          <div className="afc-topbar__actions flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="afc-topbar__actions flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
             <div className="sm:hidden">
               <UserChip compact />
             </div>
             <div className="hidden sm:block">
               <UserChip />
             </div>
-            <LogoutButton compactOnMobile />
+            <LogoutButton />
           </div>
         </div>
       </div>

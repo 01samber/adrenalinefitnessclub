@@ -44,7 +44,7 @@ export function AppShell({
   }, [mobileOpen]);
 
   return (
-    <div className="afc-shell flex min-h-screen">
+    <div className="afc-shell flex min-h-screen min-w-0 overflow-x-hidden">
       <Sidebar
         items={sidebarItems}
         brandSubtitle={brandSubtitle}
@@ -52,7 +52,7 @@ export function AppShell({
         onClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:ml-0">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
         <Topbar
           title={title}
           subtitle={subtitle}
