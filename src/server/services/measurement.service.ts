@@ -1,9 +1,11 @@
 import { UserRole } from "@prisma/client";
-import { NotFoundError } from "@/lib/api-errors";
+import { NotFoundError, ValidationError } from "@/lib/api-errors";
 import prisma from "@/lib/prisma";
 import { createAuditLog } from "@/server/services/audit-log.service";
+import { toSafeOwnerMeasurement } from "@/server/utils/owner-client-list.mapper";
 import type {
   CreateMeasurementInput,
+  CreateOwnerClientMeasurementInput,
   MeasurementListQuery,
 } from "@/server/validations/measurement.validation";
 import { toDateOnly } from "@/server/utils/dates";
@@ -141,7 +143,7 @@ export async function createMeasurement(
       bodyFatPercentage: input.bodyFatPercentage ?? null,
       bodyFatKg: derived.bodyFatKg ?? null,
       musclePercentage: input.musclePercentage ?? null,
-      muscleKg: derived.muscleKg ?? null,
+      muscleKg: input.muscleKg ?? derived.muscleKg ?? null,
       waterPercentage: input.waterPercentage ?? null,
       waterLiters: derived.waterLiters ?? null,
       visceralFatKg: input.visceralFatKg ?? null,
@@ -166,4 +168,61 @@ export async function createMeasurement(
   });
 
   return measurement;
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function createOwnerClientMeasurement(
+  clientId: string,
+  input: CreateOwnerClientMeasurementInput,
+  actorUserId: string,
+) {
+  const client = await prisma.user.findFirst({
+    where: { id: clientId, role: UserRole.CLIENT },
+    include: { clientProfile: true },
+  });
+
+  if (!client?.clientProfile) {
+    throw new NotFoundError("Client not found");
+  }
+
+  const heightCmSnapshot =
+    input.heightCmSnapshot ?? Number(client.clientProfile.heightCm);
+
+  if (!heightCmSnapshot || heightCmSnapshot <= 0) {
+    throw new ValidationError(
+      "A valid height is required. Provide heightCmSnapshot or ensure the client profile has heightCm.",
+    );
+  }
+
+  const measuredAtDate = input.measuredAt ?? todayIsoDate();
+  const measuredAt = `${measuredAtDate}T00:00:00.000Z`;
+
+  const measurement = await createMeasurement(
+    {
+      clientId,
+      measuredAt,
+      weightKg: input.weightKg!,
+      heightCmSnapshot,
+      bodyFatPercentage: input.bodyFatPercentage ?? null,
+      muscleKg: input.muscleKg ?? null,
+      musclePercentage: input.musclePercentage ?? null,
+      waterPercentage: input.waterPercentage ?? null,
+      visceralFatKg: input.visceralFatKg ?? null,
+      basalMetabolicRate: input.basalMetabolicRate ?? null,
+      metabolicAge: input.metabolicAge ?? null,
+      chestCm: input.chestCm ?? null,
+      waistCm: input.waistCm ?? null,
+      hipsCm: input.hipsCm ?? null,
+      armsCm: input.armsCm ?? null,
+      thighsCm: input.thighsCm ?? null,
+      notes: input.notes?.trim() || null,
+      coachAssessment: input.coachAssessment?.trim() || null,
+    },
+    actorUserId,
+  );
+
+  return toSafeOwnerMeasurement(measurement);
 }
