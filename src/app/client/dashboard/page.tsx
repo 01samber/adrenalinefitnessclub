@@ -17,6 +17,10 @@ import { StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { clientSidebarItems } from "@/lib/client-sidebar";
 import {
+  FROZEN_LOGIN_MESSAGE,
+  isFrozenAccessMessage,
+} from "@/lib/login-errors";
+import {
   isPaymentAttention,
 } from "@/lib/client-utils";
 import type { ClientMeData } from "@/types/api";
@@ -48,7 +52,11 @@ function ClientDashboardContent() {
           if (err instanceof ApiClientError && err.status === 401) {
             setError("Session expired. Please sign in again.");
           } else if (err instanceof ApiClientError && err.status === 403) {
-            setError("You do not have permission to view this page.");
+            setError(
+              isFrozenAccessMessage(err.message)
+                ? FROZEN_LOGIN_MESSAGE
+                : "You do not have permission to view this page.",
+            );
           } else {
             setError(
               err instanceof Error ? err.message : "Failed to load your profile.",

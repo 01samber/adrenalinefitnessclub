@@ -150,6 +150,11 @@ export interface OwnerClientDetail {
   progressNotes: ClientProgressNote[];
 }
 
+export interface OwnerClientStatusUpdate {
+  user: SafeUser;
+  profile: ClientProfile;
+}
+
 export interface OwnerDashboardData {
   totalClients: number;
   activeClients: number;

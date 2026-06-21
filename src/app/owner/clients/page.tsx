@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { ClientStatusActions } from "@/components/owner/ClientStatusActions";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -90,53 +90,6 @@ function countByStatus(items: OwnerClientListItem[], status: string) {
   return items.filter((item) => item.user.status === status).length;
 }
 
-function ClientActions({
-  clientId,
-  layout = "stacked",
-}: {
-  clientId: string;
-  layout?: "stacked" | "inline";
-}) {
-  const profileLink = (
-    <Link
-      href={`/owner/clients/${clientId}`}
-      className="inline-flex min-h-[36px] w-fit items-center justify-center rounded-lg border border-afc-red/30 bg-afc-red/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-afc-red-hot transition-colors hover:bg-afc-red/20 hover:text-afc-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afc-red"
-    >
-      Open Profile
-    </Link>
-  );
-
-  const secondaryActions = (
-    <div className="afc-roster-actions-secondary">
-      <Button size="sm" variant="ghost" disabled title="Coming soon" className="!min-h-[32px] !px-2 !text-xs">
-        Edit
-      </Button>
-      <span className="text-xs text-afc-muted" aria-hidden>
-        ·
-      </span>
-      <Button size="sm" variant="ghost" disabled title="Coming soon" className="!min-h-[32px] !px-2 !text-xs">
-        Freeze
-      </Button>
-    </div>
-  );
-
-  if (layout === "inline") {
-    return (
-      <div className="afc-roster-actions-cell">
-        {profileLink}
-        {secondaryActions}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      {profileLink}
-      {secondaryActions}
-    </div>
-  );
-}
-
 function ClientsTableSkeleton() {
   return (
     <div className="hidden xl:block">
@@ -179,7 +132,10 @@ interface ClientRowProps {
   client: OwnerClientListItem;
 }
 
-function ClientMobileCard({ client }: ClientRowProps) {
+function ClientMobileCard({
+  client,
+  onStatusChanged,
+}: ClientRowProps & { onStatusChanged: (message: string) => void }) {
   const { user, profile, assignedPlan } = client;
   const planName = assignedPlan?.name ?? "No plan assigned";
 
@@ -237,13 +193,21 @@ function ClientMobileCard({ client }: ClientRowProps) {
       </dl>
 
       <div className="mt-5 border-t border-afc-border-grey/60 pt-4">
-        <ClientActions clientId={user.id} />
+        <ClientStatusActions
+          clientId={user.id}
+          clientName={user.fullName}
+          userStatus={user.status}
+          onStatusChanged={onStatusChanged}
+        />
       </div>
     </article>
   );
 }
 
-function ClientDesktopRow({ client }: ClientRowProps) {
+function ClientDesktopRow({
+  client,
+  onStatusChanged,
+}: ClientRowProps & { onStatusChanged: (message: string) => void }) {
   const { user, profile, assignedPlan } = client;
   const planName = assignedPlan?.name ?? "—";
 
@@ -281,7 +245,13 @@ function ClientDesktopRow({ client }: ClientRowProps) {
         {formatDate(profile?.joinDate)}
       </td>
       <td className="afc-roster-actions whitespace-nowrap px-4 py-4">
-        <ClientActions clientId={user.id} layout="inline" />
+        <ClientStatusActions
+          clientId={user.id}
+          clientName={user.fullName}
+          userStatus={user.status}
+          layout="inline"
+          onStatusChanged={onStatusChanged}
+        />
       </td>
     </tr>
   );
@@ -296,6 +266,7 @@ function ClientsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -347,6 +318,11 @@ function ClientsContent() {
     };
   }, [page, debouncedSearch, statusFilter, reloadKey]);
 
+  const handleStatusChanged = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
   const handleRefresh = () => {
     setReloadKey((key) => key + 1);
   };
@@ -396,6 +372,15 @@ function ClientsContent() {
             </span>
           </div>
         </div>
+
+        {successMessage ? (
+          <div
+            className="rounded-xl border border-afc-green/40 bg-afc-green/10 px-4 py-3 text-sm text-afc-green-neon"
+            role="status"
+          >
+            {successMessage}
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
@@ -560,7 +545,11 @@ function ClientsContent() {
                     </thead>
                     <tbody>
                       {items.map((client) => (
-                        <ClientDesktopRow key={client.user.id} client={client} />
+                        <ClientDesktopRow
+                          key={client.user.id}
+                          client={client}
+                          onStatusChanged={handleStatusChanged}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -570,7 +559,11 @@ function ClientsContent() {
 
             <div className="space-y-4 xl:hidden">
               {items.map((client) => (
-                <ClientMobileCard key={client.user.id} client={client} />
+                <ClientMobileCard
+                  key={client.user.id}
+                  client={client}
+                  onStatusChanged={handleStatusChanged}
+                />
               ))}
             </div>
           </>

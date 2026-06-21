@@ -6,6 +6,7 @@ import { getSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { resolveLoginErrorMessage } from "@/lib/login-errors";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,8 +29,13 @@ export default function LoginPage() {
 
       setPassword("");
 
-      if (result?.error) {
-        setError("Invalid email or password. Please try again.");
+      if (!result?.ok) {
+        setError(
+          resolveLoginErrorMessage({
+            error: result?.error,
+            url: result?.url,
+          }),
+        );
         return;
       }
 

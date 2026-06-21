@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -428,6 +429,14 @@ function ClientDetailContent() {
                 },
               ]}
               accent="red"
+            />
+
+            <ClientStatusPanel
+              clientId={data.user.id}
+              clientName={data.user.fullName}
+              userStatus={data.user.status}
+              profileStatus={data.profile?.status}
+              onStatusChanged={handleRetry}
             />
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
