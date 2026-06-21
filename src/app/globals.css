@@ -1305,6 +1305,156 @@ body {
   color: var(--afc-red-hot);
 }
 
+/* ─── Plan selector (onboarding) ─────────────────────────────────────────── */
+
+.afc-plan-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.afc-plan-selector__status,
+.afc-plan-selector__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--afc-muted);
+}
+
+.afc-plan-selector__error {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #fca5a5;
+}
+
+.afc-plan-selector__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .afc-plan-selector__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .afc-plan-selector__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.afc-plan-card {
+  position: relative;
+  display: flex;
+  min-height: 132px;
+  min-width: 0;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease,
+    background 0.2s ease;
+  touch-action: manipulation;
+}
+
+.afc-plan-card:hover {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.afc-plan-card:focus-visible {
+  outline: 2px solid var(--afc-red);
+  outline-offset: 2px;
+}
+
+.afc-plan-card--selected {
+  border-color: rgba(34, 197, 94, 0.65);
+  background: linear-gradient(
+    145deg,
+    rgba(34, 197, 94, 0.12) 0%,
+    rgba(220, 38, 38, 0.08) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.afc-plan-card--none {
+  min-height: 112px;
+}
+
+.afc-plan-card__header {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.afc-plan-card__name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--afc-white);
+}
+
+.afc-plan-card__meta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--afc-muted);
+}
+
+.afc-plan-card__price {
+  margin-top: auto;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--afc-green-neon);
+}
+
+.afc-plan-card__badge {
+  margin-top: 0.25rem;
+}
+
+.afc-plan-card--skeleton {
+  pointer-events: none;
+  animation: afc-pulse 1.5s ease-in-out infinite;
+}
+
+.afc-plan-card__skeleton-line {
+  border-radius: 0.375rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.afc-plan-card__skeleton-line--title {
+  height: 1rem;
+  width: 72%;
+}
+
+.afc-plan-card__skeleton-line--meta {
+  height: 0.75rem;
+  width: 48%;
+}
+
+.afc-plan-card__skeleton-line--price {
+  margin-top: auto;
+  height: 1.25rem;
+  width: 40%;
+}
+
 .afc-onboarding-sidebar {
   position: sticky;
   top: 1.5rem;

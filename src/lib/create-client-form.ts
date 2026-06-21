@@ -21,7 +21,7 @@ export interface CreateClientFormValues {
   activityLevel: ActivityLevelOption | "";
   medicalNotes: string;
   injuries: string;
-  assignedPlanId: string;
+  assignedPlanId: string | null;
   joinDate: string;
   coachNotes: string;
 }
@@ -209,7 +209,7 @@ export function createInitialClientFormValues(): CreateClientFormValues {
     activityLevel: "",
     medicalNotes: "",
     injuries: "",
-    assignedPlanId: "",
+    assignedPlanId: null,
     joinDate: todayIsoDate(),
     coachNotes: "",
   };
@@ -310,7 +310,7 @@ export function toCreateClientPayload(values: CreateClientFormValues) {
     activityLevel: values.activityLevel as ActivityLevelOption,
     medicalNotes: values.medicalNotes.trim(),
     injuries: values.injuries.trim(),
-    assignedPlanId: values.assignedPlanId.trim() || null,
+    assignedPlanId: values.assignedPlanId || null,
     joinDate: values.joinDate,
     coachNotes: values.coachNotes.trim(),
   };
@@ -328,6 +328,14 @@ export function resolveCreateClientErrorMessage(
       message.includes("already in use")
     ) {
       return "A client with this email already exists.";
+    }
+
+    if (
+      message.includes("plan not found") ||
+      message.includes("plan is not active") ||
+      message.includes("no longer available")
+    ) {
+      return "Selected plan is no longer available. Please choose another plan.";
     }
 
     if (error.message && error.message !== "ApiClientError") {

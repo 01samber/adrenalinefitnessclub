@@ -183,9 +183,32 @@ export interface CreateClientInput {
   coachNotes?: string;
 }
 
+export type OwnerPlan = {
+  id: string;
+  name: string;
+  sessionsPerWeek: number;
+  monthlyPrice: string;
+  currency: string;
+  status: "ACTIVE";
+};
+
+export type OwnerPlansResponse = {
+  items: OwnerPlan[];
+};
+
 export interface CreateClientResponse {
-  user: SafeUser;
+  client: SafeUser;
   profile: ClientProfile;
+  subscription: {
+    id: string;
+    status: string;
+    startDate: string;
+    nextBillingDate: string;
+    plan: Pick<
+      OwnerPlan,
+      "id" | "name" | "sessionsPerWeek" | "monthlyPrice" | "currency"
+    >;
+  } | null;
 }
 
 export interface OwnerDashboardData {

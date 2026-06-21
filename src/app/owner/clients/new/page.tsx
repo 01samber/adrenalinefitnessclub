@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useRef, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AthleteOnboardingPreview } from "@/components/owner/AthleteOnboardingPreview";
-import { MembershipPlanPreview } from "@/components/owner/MembershipPlanPreview";
+import { PlanSelector } from "@/components/owner/PlanSelector";
 import { OnboardingStepIndicator } from "@/components/owner/OnboardingStepIndicator";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
@@ -29,7 +29,7 @@ import {
   type OnboardingStepId,
 } from "@/lib/create-client-form";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
-import type { CreateClientResponse } from "@/types/api";
+import type { CreateClientResponse, OwnerPlan } from "@/types/api";
 
 function TextAreaField({
   label,
@@ -128,6 +128,16 @@ function CreateClientContent() {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [highlightStep, setHighlightStep] = useState<OnboardingStepId | undefined>();
+  const [availablePlans, setAvailablePlans] = useState<OwnerPlan[]>([]);
+
+  const selectedPlan = availablePlans.find(
+    (plan) => plan.id === values.assignedPlanId,
+  );
+  const selectedPlanLabel = selectedPlan
+    ? selectedPlan.name
+    : values.assignedPlanId
+      ? "Plan selected"
+      : "No plan yet";
 
   const errorSummary = listOnboardingErrorSummary(fieldErrors);
 
@@ -169,10 +179,14 @@ function CreateClientContent() {
         payload,
       );
 
-      setSuccessMessage("Athlete profile created successfully.");
+      setSuccessMessage(
+        result.subscription
+          ? "Athlete profile created successfully. Membership plan assigned successfully."
+          : "Athlete profile created successfully.",
+      );
 
-      if (result.user?.id) {
-        router.push(`/owner/clients/${result.user.id}`);
+      if (result.client?.id) {
+        router.push(`/owner/clients/${result.client.id}`);
         return;
       }
 
@@ -230,7 +244,11 @@ function CreateClientContent() {
         </div>
 
         <div className="afc-onboarding-preview-mobile xl:hidden">
-          <AthleteOnboardingPreview values={values} compact />
+          <AthleteOnboardingPreview
+            values={values}
+            compact
+            selectedPlanLabel={selectedPlanLabel}
+          />
         </div>
 
         {successMessage ? (
@@ -489,11 +507,15 @@ function CreateClientContent() {
                       Membership Plan
                     </h2>
                     <p className="mt-1 text-sm text-afc-muted">
-                      Optional plan assignment for this athlete
+                      Assign the athlete to a training membership during onboarding.
                     </p>
                   </div>
                 </div>
-                <MembershipPlanPreview />
+                <PlanSelector
+                  selectedPlanId={values.assignedPlanId}
+                  onChange={(planId) => updateField("assignedPlanId", planId)}
+                  onPlansLoaded={setAvailablePlans}
+                />
               </Card>
             </section>
 
@@ -521,7 +543,10 @@ function CreateClientContent() {
 
           <aside className="hidden xl:block">
             <div className="afc-onboarding-sidebar">
-              <AthleteOnboardingPreview values={values} />
+              <AthleteOnboardingPreview
+                values={values}
+                selectedPlanLabel={selectedPlanLabel}
+              />
               <div className="afc-onboarding-actions afc-onboarding-actions--desktop">
                 <Button
                   type="submit"

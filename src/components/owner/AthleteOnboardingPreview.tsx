@@ -10,6 +10,7 @@ import {
 interface AthleteOnboardingPreviewProps {
   values: CreateClientFormValues;
   compact?: boolean;
+  selectedPlanLabel?: string;
 }
 
 function formatPreviewDate(value: string) {
@@ -24,6 +25,7 @@ function formatPreviewDate(value: string) {
 export function AthleteOnboardingPreview({
   values,
   compact = false,
+  selectedPlanLabel = "No plan yet",
 }: AthleteOnboardingPreviewProps) {
   const displayName = values.fullName.trim() || "New Athlete";
   const initial = displayName.charAt(0).toUpperCase();
@@ -67,6 +69,10 @@ export function AthleteOnboardingPreview({
           <div>
             <dt>Join date</dt>
             <dd>{formatPreviewDate(values.joinDate)}</dd>
+          </div>
+          <div>
+            <dt>Membership</dt>
+            <dd>{selectedPlanLabel}</dd>
           </div>
         </dl>
 
