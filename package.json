@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
     "check:auth-user": "tsx scripts/check-auth-user.ts",
-    "check:client-status": "tsx scripts/check-client-status.ts"
+    "check:client-status": "tsx scripts/check-client-status.ts",
+    "check:security-basics": "tsx scripts/check-security-basics.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
