@@ -23,7 +23,7 @@ export function Input({
       </label>
       <input
         id={inputId}
-        className={`min-h-[48px] w-full rounded-xl border bg-afc-black/40 px-4 py-3 text-base text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-red focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-red/25 sm:text-sm ${error ? "border-afc-red" : "border-afc-border-grey"} ${className}`}
+        className={`min-h-[48px] w-full rounded-xl border bg-afc-black/40 px-4 py-3 text-base text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-red focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-red/25 ${error ? "border-afc-red" : "border-afc-border-grey"} ${className}`}
         {...props}
       />
       {hint && !error ? (

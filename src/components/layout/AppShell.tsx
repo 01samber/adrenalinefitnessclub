@@ -7,6 +7,7 @@ import { Topbar } from "@/components/layout/Topbar";
 interface AppShellProps {
   title: string;
   subtitle?: string;
+  mobileTitle?: string;
   sidebarItems: SidebarItem[];
   brandSubtitle: string;
   children: React.ReactNode;
@@ -15,6 +16,7 @@ interface AppShellProps {
 export function AppShell({
   title,
   subtitle,
+  mobileTitle,
   sidebarItems,
   brandSubtitle,
   children,
@@ -54,9 +56,10 @@ export function AppShell({
         <Topbar
           title={title}
           subtitle={subtitle}
+          mobileTitle={mobileTitle}
           onMenuOpen={() => setMobileOpen(true)}
         />
-        <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <main className="afc-main relative z-10 mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           {children}
         </main>
       </div>

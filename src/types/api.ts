@@ -155,6 +155,39 @@ export interface OwnerClientStatusUpdate {
   profile: ClientProfile;
 }
 
+export type Gender = "MALE" | "FEMALE" | "OTHER";
+
+export type ActivityLevel =
+  | "SEDENTARY"
+  | "LIGHT"
+  | "MODERATE"
+  | "ACTIVE"
+  | "VERY_ACTIVE";
+
+export interface CreateClientInput {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  temporaryPassword: string;
+  dateOfBirth: string;
+  gender: Gender;
+  heightCm: number;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  fitnessGoal: string;
+  activityLevel: ActivityLevel;
+  medicalNotes?: string;
+  injuries?: string;
+  assignedPlanId?: string | null;
+  joinDate: string;
+  coachNotes?: string;
+}
+
+export interface CreateClientResponse {
+  user: SafeUser;
+  profile: ClientProfile;
+}
+
 export interface OwnerDashboardData {
   totalClients: number;
   activeClients: number;

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 interface TopbarProps {
   title: string;
   subtitle?: string;
+  mobileTitle?: string;
   onMenuOpen: () => void;
 }
 
@@ -38,21 +39,23 @@ function UserChip({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function Topbar({ title, subtitle, onMenuOpen }: TopbarProps) {
+export function Topbar({ title, subtitle, mobileTitle, onMenuOpen }: TopbarProps) {
+  const displayMobileTitle = mobileTitle ?? title;
+
   return (
-    <header className="afc-topbar-scoreboard afc-glass sticky top-0 z-30 backdrop-blur-md">
-      <div className="relative px-4 py-3 sm:px-6 lg:px-8">
+    <header className="afc-topbar-scoreboard afc-topbar afc-glass sticky top-0 z-30 backdrop-blur-md">
+      <div className="relative px-3 py-2.5 sm:px-6 sm:py-3 lg:px-8">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-afc-red/50 to-transparent"
           aria-hidden
         />
 
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onMenuOpen}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-afc-border-grey/80 text-afc-white transition-colors hover:border-afc-red/45 hover:bg-afc-red/10 lg:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-afc-border-grey/80 text-afc-white transition-colors hover:border-afc-red/45 hover:bg-afc-red/10 sm:h-11 sm:w-11 lg:hidden"
               aria-label="Open navigation menu"
             >
               <span className="flex flex-col gap-1.5" aria-hidden>
@@ -62,30 +65,29 @@ export function Topbar({ title, subtitle, onMenuOpen }: TopbarProps) {
               </span>
             </button>
 
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-afc-red to-afc-red-dark text-[10px] font-black text-afc-white lg:hidden">
+            <div className="afc-topbar__brand hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-afc-red to-afc-red-dark text-[9px] font-black text-afc-white min-[390px]:flex sm:h-9 sm:w-9 sm:rounded-xl sm:text-[10px] lg:hidden">
               AFC
             </div>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-black uppercase tracking-tight text-afc-white sm:text-xl lg:text-2xl">
-                {title}
-              </h1>
+            <div className="afc-topbar__titles min-w-0 flex-1">
+              <h1 className="afc-topbar__title sm:hidden">{displayMobileTitle}</h1>
+              <h1 className="afc-topbar__title hidden sm:block">{title}</h1>
               {subtitle ? (
-                <p className="mt-0.5 truncate text-xs font-medium text-afc-muted sm:text-sm">
+                <p className="afc-topbar__subtitle mt-0.5 hidden min-[430px]:block">
                   {subtitle}
                 </p>
               ) : null}
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="afc-topbar__actions flex shrink-0 items-center gap-1.5 sm:gap-2">
             <div className="sm:hidden">
               <UserChip compact />
             </div>
             <div className="hidden sm:block">
               <UserChip />
             </div>
-            <LogoutButton />
+            <LogoutButton compactOnMobile />
           </div>
         </div>
       </div>

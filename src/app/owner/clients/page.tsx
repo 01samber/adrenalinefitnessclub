@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ClientStatusActions } from "@/components/owner/ClientStatusActions";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/DataRow";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { StatCard } from "@/components/ui/StatCard";
+import { Select } from "@/components/ui/Select";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import type {
@@ -437,30 +439,16 @@ function ClientsContent() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="client-status"
-                  className="text-sm font-medium text-afc-light-grey"
-                >
-                  Status
-                </label>
-                <select
-                  id="client-status"
-                  value={statusFilter}
-                  onChange={(event) =>
-                    handleStatusChange(
-                      event.target.value as ClientListStatusFilter,
-                    )
-                  }
-                  className="min-h-[44px] w-full rounded-xl border border-afc-border-grey bg-afc-black/40 px-4 py-2.5 text-sm text-afc-white focus:border-afc-red focus:outline-none focus:ring-2 focus:ring-afc-red/25"
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                id="client-status"
+                label="Status"
+                value={statusFilter}
+                onChange={(value) =>
+                  handleStatusChange(value as ClientListStatusFilter)
+                }
+                options={STATUS_OPTIONS}
+                usePlaceholderOption={false}
+              />
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -473,12 +461,11 @@ function ClientsContent() {
               >
                 Refresh
               </Button>
-              <Button type="button" variant="primary" size="md" disabled>
-                Add Client
-                <Badge variant="outline" className="ml-1 normal-case">
-                  Soon
-                </Badge>
-              </Button>
+              <Link href="/owner/clients/new">
+                <Button type="button" variant="primary" size="md">
+                  Add Client
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
