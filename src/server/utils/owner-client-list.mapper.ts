@@ -93,6 +93,44 @@ export function toSafeListMeasurement(
   };
 }
 
+export type SafeOwnerMeasurement = {
+  id: string;
+  clientId: string;
+  measuredAt: string;
+  weightKg: number;
+  heightCmSnapshot: number;
+  bodyFatPercentage: number | null;
+  muscleKg: number | null;
+  chestCm: number | null;
+  waistCm: number | null;
+  hipsCm: number | null;
+  armsCm: number | null;
+  thighsCm: number | null;
+  coachAssessment: string | null;
+  notes: string | null;
+};
+
+export function toSafeOwnerMeasurement(
+  measurement: BodyMeasurement,
+): SafeOwnerMeasurement {
+  return {
+    id: measurement.id,
+    clientId: measurement.clientId,
+    measuredAt: measurement.measuredAt.toISOString(),
+    weightKg: decimalToNumber(measurement.weightKg) ?? 0,
+    heightCmSnapshot: decimalToNumber(measurement.heightCmSnapshot) ?? 0,
+    bodyFatPercentage: decimalToNumber(measurement.bodyFatPercentage),
+    muscleKg: decimalToNumber(measurement.muscleKg),
+    chestCm: decimalToNumber(measurement.chestCm),
+    waistCm: decimalToNumber(measurement.waistCm),
+    hipsCm: decimalToNumber(measurement.hipsCm),
+    armsCm: decimalToNumber(measurement.armsCm),
+    thighsCm: decimalToNumber(measurement.thighsCm),
+    coachAssessment: measurement.coachAssessment,
+    notes: measurement.notes,
+  };
+}
+
 export function firstRowPerClientId<T extends { clientId: string }>(
   rows: T[],
 ): Map<string, T> {
