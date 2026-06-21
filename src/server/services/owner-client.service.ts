@@ -1,18 +1,25 @@
 import {
   ClientStatus,
+  SubscriptionStatus,
   UserRole,
   UserStatus,
+  type Plan,
+  type Prisma,
 } from "@prisma/client";
-import { ConflictError, NotFoundError } from "@/lib/api-errors";
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/api-errors";
 import { hashPassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
+import {
+  toSafeSubscriptionWithPlan,
+  type SafeSubscriptionWithPlan,
+} from "@/server/services/plan.service";
 import type {
   ClientListQuery,
   CreateClientInput,
   UpdateClientInput,
 } from "@/server/validations/client.validation";
 import { parsePagination, paginate } from "@/server/utils/pagination";
-import { toDateOnly } from "@/server/utils/dates";
+import { addDays, toDateOnly } from "@/server/utils/dates";
 import { toSafeUser } from "@/server/utils/safe-user";
 
 function mapUserStatusToClientStatus(status: UserStatus): ClientStatus {
@@ -39,6 +46,23 @@ async function getClientUserOrThrow(clientId: string) {
   }
 
   return user;
+}
+
+async function getActivePlanOrThrow(
+  planId: string,
+  tx: Prisma.TransactionClient,
+): Promise<Plan> {
+  const plan = await tx.plan.findUnique({ where: { id: planId } });
+
+  if (!plan) {
+    throw new NotFoundError("Plan not found");
+  }
+
+  if (!plan.isActive) {
+    throw new ValidationError("Plan is not active");
+  }
+
+  return plan;
 }
 
 export async function listClients(query: ClientListQuery) {
@@ -130,8 +154,13 @@ export async function createClient(input: CreateClientInput, actorUserId: string
   }
 
   const passwordHash = await hashPassword(input.temporaryPassword);
+  const startDate = toDateOnly(input.joinDate);
 
   const result = await prisma.$transaction(async (tx) => {
+    const selectedPlan = input.assignedPlanId
+      ? await getActivePlanOrThrow(input.assignedPlanId, tx)
+      : null;
+
     const user = await tx.user.create({
       data: {
         fullName: input.fullName,
@@ -155,13 +184,45 @@ export async function createClient(input: CreateClientInput, actorUserId: string
         medicalNotes: input.medicalNotes || null,
         injuries: input.injuries || null,
         activityLevel: input.activityLevel,
-        joinDate: toDateOnly(input.joinDate),
+        joinDate: startDate,
         coachNotes: input.coachNotes || null,
-        assignedPlanId: input.assignedPlanId ?? null,
+        assignedPlanId: selectedPlan?.id ?? null,
         status: ClientStatus.ACTIVE,
       },
       include: { assignedPlan: true },
     });
+
+    let subscription: SafeSubscriptionWithPlan | null = null;
+
+    if (selectedPlan) {
+      const createdSubscription = await tx.subscription.create({
+        data: {
+          clientId: user.id,
+          planId: selectedPlan.id,
+          startDate,
+          nextBillingDate: addDays(startDate, 30),
+          status: SubscriptionStatus.ACTIVE,
+          autoRenew: true,
+        },
+        include: { plan: true },
+      });
+
+      subscription = toSafeSubscriptionWithPlan(createdSubscription);
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId,
+          action: "subscription.created",
+          entityType: "Subscription",
+          entityId: createdSubscription.id,
+          metadata: {
+            clientId: user.id,
+            planId: selectedPlan.id,
+            source: "client.onboarding",
+          },
+        },
+      });
+    }
 
     await tx.auditLog.create({
       data: {
@@ -169,16 +230,20 @@ export async function createClient(input: CreateClientInput, actorUserId: string
         action: "client.created",
         entityType: "User",
         entityId: user.id,
-        metadata: { email: user.email },
+        metadata: {
+          email: user.email,
+          assignedPlanId: selectedPlan?.id ?? null,
+        },
       },
     });
 
-    return { user, profile };
+    return { user, profile, subscription };
   });
 
   return {
-    user: toSafeUser(result.user),
+    client: toSafeUser(result.user),
     profile: result.profile,
+    subscription: result.subscription,
   };
 }
 

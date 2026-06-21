@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 import {
   dateStringSchema,
+  idSchema,
   optionalSearchSchema,
   paginationQuerySchema,
 } from "@/server/validations/common.validation";
@@ -25,7 +26,7 @@ export const createClientSchema = z.object({
   activityLevel: z.nativeEnum(ActivityLevel),
   medicalNotes: z.string().max(2000).optional().default(""),
   injuries: z.string().max(2000).optional().default(""),
-  assignedPlanId: z.string().trim().min(1).nullable().optional(),
+  assignedPlanId: idSchema.nullable().optional(),
   joinDate: dateStringSchema,
   coachNotes: z.string().max(2000).optional().default(""),
 });
@@ -43,7 +44,7 @@ export const updateClientSchema = z
     activityLevel: z.nativeEnum(ActivityLevel).optional(),
     medicalNotes: z.string().max(2000).optional(),
     injuries: z.string().max(2000).optional(),
-    assignedPlanId: z.string().trim().min(1).nullable().optional(),
+    assignedPlanId: idSchema.nullable().optional(),
     joinDate: dateStringSchema.optional(),
     coachNotes: z.string().max(2000).optional(),
   })
