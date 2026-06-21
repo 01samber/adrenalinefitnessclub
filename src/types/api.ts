@@ -54,6 +54,7 @@ export interface OwnerClientListPlan {
   sessionsPerWeek: number;
   monthlyPrice: string;
   currency: string;
+  status?: string;
 }
 
 export interface OwnerClientListActiveSubscription {
@@ -61,7 +62,7 @@ export interface OwnerClientListActiveSubscription {
   status: string;
   startDate: string;
   endDate: string | null;
-  nextBillingDate: string;
+  nextBillingDate: string | null;
   plan: OwnerClientListPlan;
 }
 

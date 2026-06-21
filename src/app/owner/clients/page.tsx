@@ -17,7 +17,10 @@ import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import type {
   ClientListStatusFilter,
+  OwnerClientListActiveSubscription,
   OwnerClientListItem,
+  OwnerClientListMeasurement,
+  OwnerClientListPayment,
   OwnerClientsData,
 } from "@/types/api";
 
@@ -61,6 +64,15 @@ function buildClientsUrl(
   return `/api/owner/clients?${params.toString()}`;
 }
 
+function formatShortDate(value: string | null | undefined) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function formatDate(value: string | null | undefined) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("en-US", {
@@ -90,26 +102,161 @@ function statusBadgeVariant(
   }
 }
 
-function formatPlanPrice(monthlyPrice: string, currency: string) {
-  const amount = Number(monthlyPrice);
-  if (Number.isNaN(amount)) return `${currency} ${monthlyPrice}`;
+function formatMoney(amount: string, currency: string) {
+  const numeric = Number(amount);
+  if (Number.isNaN(numeric)) return `${currency} ${amount}`;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(numeric);
 }
 
 function getAssignedPlanLabel(client: OwnerClientListItem) {
   return client.assignedPlan?.name ?? "—";
 }
 
-function getSubscriptionLabel(client: OwnerClientListItem) {
-  if (!client.assignedPlan) return "—";
-  return `${client.assignedPlan.sessionsPerWeek}× / week · ${formatPlanPrice(
-    client.assignedPlan.monthlyPrice,
-    client.assignedPlan.currency,
-  )}`;
+function getSubscriptionBadgeTone(
+  status: string,
+): "success" | "warning" | "danger" | "neutral" {
+  switch (status) {
+    case "ACTIVE":
+      return "success";
+    case "EXPIRED":
+    case "CANCELLED":
+      return "danger";
+    case "FROZEN":
+      return "warning";
+    default:
+      return "neutral";
+  }
+}
+
+function getPaymentBadgeTone(
+  status: string,
+): "success" | "warning" | "danger" | "neutral" {
+  const normalized = status.toUpperCase();
+  if (normalized === "PAID" || normalized === "COMPLETED") return "success";
+  if (normalized === "OVERDUE" || normalized === "FAILED") return "danger";
+  if (
+    normalized === "UNPAID" ||
+    normalized === "PENDING" ||
+    normalized === "PARTIAL" ||
+    normalized === "DUE"
+  ) {
+    return "warning";
+  }
+  return "neutral";
+}
+
+function SubscriptionSummary({
+  subscription,
+  compact = false,
+}: {
+  subscription: OwnerClientListActiveSubscription | null;
+  compact?: boolean;
+}) {
+  if (!subscription) {
+    return (
+      <span className="text-sm text-afc-muted">
+        {compact ? "—" : "No active subscription"}
+      </span>
+    );
+  }
+
+  const { plan } = subscription;
+
+  return (
+    <div className="afc-roster-cell">
+      <Badge variant={getSubscriptionBadgeTone(subscription.status)}>
+        {subscription.status}
+      </Badge>
+      <p className="afc-roster-cell__line">
+        {plan.sessionsPerWeek} sessions/week
+      </p>
+      <p className="afc-roster-cell__line">
+        {formatMoney(plan.monthlyPrice, plan.currency)}/month
+      </p>
+      {subscription.nextBillingDate ? (
+        <p className="afc-roster-cell__meta">
+          Next: {formatShortDate(subscription.nextBillingDate)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function PaymentSummary({
+  payment,
+  compact = false,
+}: {
+  payment: OwnerClientListPayment | null;
+  compact?: boolean;
+}) {
+  if (!payment) {
+    return (
+      <span className="text-sm text-afc-muted">
+        {compact ? "—" : "No payment"}
+      </span>
+    );
+  }
+
+  const isPaid =
+    payment.status.toUpperCase() === "PAID" ||
+    payment.status.toUpperCase() === "COMPLETED";
+
+  return (
+    <div className="afc-roster-cell">
+      <p className="afc-roster-cell__line afc-roster-cell__line--strong">
+        {formatMoney(payment.amount, payment.currency)}
+      </p>
+      <Badge variant={getPaymentBadgeTone(payment.status)}>
+        {payment.status}
+      </Badge>
+      <p className="afc-roster-cell__meta">
+        {isPaid && payment.paidAt
+          ? formatShortDate(payment.paidAt)
+          : `Due ${formatShortDate(payment.dueDate)}`}
+      </p>
+    </div>
+  );
+}
+
+function MeasurementSummary({
+  measurement,
+  compact = false,
+}: {
+  measurement: OwnerClientListMeasurement | null;
+  compact?: boolean;
+}) {
+  if (!measurement) {
+    return (
+      <span className="text-sm text-afc-muted">
+        {compact ? "—" : "No measurement"}
+      </span>
+    );
+  }
+
+  const detailParts: string[] = [];
+
+  if (measurement.weightKg != null) {
+    detailParts.push(`${measurement.weightKg} kg`);
+  }
+
+  if (measurement.bodyFatPercentage != null) {
+    detailParts.push(`${measurement.bodyFatPercentage}% BF`);
+  }
+
+  return (
+    <div className="afc-roster-cell">
+      {detailParts.length > 0 ? (
+        <p className="afc-roster-cell__line">{detailParts.join(" · ")}</p>
+      ) : null}
+      <p className="afc-roster-cell__meta">
+        {formatShortDate(measurement.measuredAt)}
+      </p>
+    </div>
+  );
 }
 
 function countByStatus(items: OwnerClientListItem[], status: string) {
@@ -162,9 +309,8 @@ function ClientMobileCard({
   client,
   onStatusChanged,
 }: ClientRowProps & { onStatusChanged: (message: string) => void }) {
-  const { user, profile, assignedPlan } = client;
+  const { user, profile } = client;
   const planName = getAssignedPlanLabel(client);
-  const subscriptionLabel = getSubscriptionLabel(client);
   const initial = user.fullName.charAt(0).toUpperCase();
 
   return (
@@ -200,20 +346,20 @@ function ClientMobileCard({
         <div>
           <dt>Active subscription</dt>
           <dd>
-            {assignedPlan ? (
-              <Badge variant="success">{subscriptionLabel}</Badge>
-            ) : (
-              <span className="text-afc-muted">—</span>
-            )}
+            <SubscriptionSummary subscription={client.activeSubscription} />
           </dd>
         </div>
         <div>
           <dt>Latest payment</dt>
-          <dd className="text-afc-muted">—</dd>
+          <dd>
+            <PaymentSummary payment={client.latestPayment} />
+          </dd>
         </div>
         <div>
           <dt>Latest measurement</dt>
-          <dd className="text-afc-muted">—</dd>
+          <dd>
+            <MeasurementSummary measurement={client.latestMeasurement} />
+          </dd>
         </div>
         <div>
           <dt>Joined</dt>
@@ -237,7 +383,7 @@ function ClientDesktopRow({
   client,
   onStatusChanged,
 }: ClientRowProps & { onStatusChanged: (message: string) => void }) {
-  const { user, profile, assignedPlan } = client;
+  const { user, profile } = client;
   const planName = getAssignedPlanLabel(client);
 
   return (
@@ -266,18 +412,14 @@ function ClientDesktopRow({
       <td className="max-w-[10rem] px-4 py-4 text-sm text-afc-light-grey">
         <span className="line-clamp-2">{planName}</span>
       </td>
-      <td className="px-4 py-4">
-        {assignedPlan ? (
-          <Badge variant="success">{getSubscriptionLabel(client)}</Badge>
-        ) : (
-          <span className="text-sm text-afc-muted">—</span>
-        )}
+      <td className="min-w-[9.5rem] px-4 py-4">
+        <SubscriptionSummary subscription={client.activeSubscription} compact />
       </td>
-      <td className="px-4 py-4">
-        <span className="text-sm text-afc-muted">—</span>
+      <td className="min-w-[8.5rem] px-4 py-4">
+        <PaymentSummary payment={client.latestPayment} compact />
       </td>
-      <td className="px-4 py-4">
-        <span className="text-sm text-afc-muted">—</span>
+      <td className="min-w-[8.5rem] px-4 py-4">
+        <MeasurementSummary measurement={client.latestMeasurement} compact />
       </td>
       <td className="whitespace-nowrap px-4 py-4 text-sm text-afc-soft-grey">
         {formatDate(profile?.joinDate)}
