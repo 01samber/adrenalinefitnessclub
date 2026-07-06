@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
-
+import { AfcSectionIcon, resolveSectionIcon } from "@/components/ui/AfcSectionIcon";
 type CardAccent = "none" | "red" | "green" | "neutral";
 type CardVariant = "default" | "elevated" | "glass";
 
@@ -11,6 +11,8 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   hover?: boolean;
   headerAction?: ReactNode;
+  headerIcon?: ReactNode;
+  showSectionIcon?: boolean;
 }
 
 const paddingClasses = {
@@ -41,6 +43,8 @@ export function Card({
   variant = "default",
   hover = false,
   headerAction,
+  headerIcon,
+  showSectionIcon = true,
   className = "",
   children,
   ...props
@@ -58,9 +62,16 @@ export function Card({
         >
           <div>
             {title ? (
-              <h2 className="text-base font-semibold tracking-tight text-afc-white sm:text-lg">
-                {title}
-              </h2>
+              <div className="afc-card__title-row">
+                {showSectionIcon ? (
+                  headerIcon ?? (
+                    <AfcSectionIcon id={resolveSectionIcon(title)} />
+                  )
+                ) : null}
+                <h2 className="afc-display text-base font-semibold tracking-tight text-afc-white sm:text-lg">
+                  {title}
+                </h2>
+              </div>
             ) : null}
             {subtitle ? (
               <p className="mt-1 text-sm leading-relaxed text-afc-soft-grey">

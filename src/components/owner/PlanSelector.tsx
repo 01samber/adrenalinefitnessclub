@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { PlanSessionIcon } from "@/components/owner/PlanSessionIcon";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ApiClientError, apiGet } from "@/lib/api-client";
@@ -155,7 +156,10 @@ export function PlanSelector({
               onClick={() => onChange(plan.id)}
             >
               <div className="afc-plan-card__header">
-                <span className="afc-plan-card__name">{plan.name}</span>
+                <span className="afc-plan-card__title-row">
+                  <PlanSessionIcon sessionsPerWeek={plan.sessionsPerWeek} />
+                  <span className="afc-plan-card__name">{plan.name}</span>
+                </span>
                 <Badge variant="success">{plan.status}</Badge>
               </div>
               <span className="afc-plan-card__meta">

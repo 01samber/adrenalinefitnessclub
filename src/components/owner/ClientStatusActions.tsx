@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { ApiClientError, apiPatch } from "@/lib/api-client";
+import { ActionIcon } from "@/components/ui/ActionIcon";
+import { Button } from "@/components/ui/Button";import { ApiClientError, apiPatch } from "@/lib/api-client";
 import {
   clientStatusActionLabel,
   clientStatusSuccessMessage,
@@ -72,35 +70,36 @@ export function ClientStatusActions({
         type="button"
         size="sm"
         variant={availableAction === "freeze" ? "danger" : "success"}
-        className="!min-h-[44px] !px-3 !text-xs"
+        className="!min-h-[44px] !px-3 !text-xs afc-roster-action-btn"
         onClick={() => {
           setActionError("");
           setPendingAction(availableAction);
         }}
         disabled={loading}
       >
+        <ActionIcon
+          id={availableAction === "freeze" ? "pause" : "play"}
+        />
         {clientStatusActionLabel(availableAction)}
-      </Button>
-    );
+      </Button>    );
 
   const profileLink = (
-    <Link
-      href={`/owner/clients/${clientId}`}
-      className="inline-flex min-h-[36px] w-fit items-center justify-center rounded-lg border border-afc-red/30 bg-afc-red/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-afc-red-hot transition-colors hover:bg-afc-red/20 hover:text-afc-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afc-red"
-    >
-      Open Profile
+    <Link href={`/owner/clients/${clientId}`}>
+      <Button type="button" size="sm" variant="secondary" className="!text-xs afc-roster-action-btn">
+        <ActionIcon id="profile" />
+        Open Profile
+      </Button>
     </Link>
   );
 
   const mobileProfileLink = (
-    <Link
-      href={`/owner/clients/${clientId}`}
-      className="inline-flex min-h-[44px] w-fit items-center justify-center rounded-lg border border-afc-red/30 bg-afc-red/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-afc-red-hot transition-colors hover:bg-afc-red/20 hover:text-afc-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-afc-red"
-    >
-      Open Profile
+    <Link href={`/owner/clients/${clientId}`}>
+      <Button type="button" size="sm" variant="secondary" className="!min-h-[44px] !text-xs afc-roster-action-btn">
+        <ActionIcon id="profile" />
+        Open Profile
+      </Button>
     </Link>
   );
-
   const content =
     layout === "inline" ? (
       <div className="afc-roster-actions-cell">
@@ -119,7 +118,7 @@ export function ClientStatusActions({
       {content}
 
       {actionError ? (
-        <p className="mt-2 text-xs text-red-300" role="alert">
+        <p className="mt-2 text-xs text-afc-red" role="alert">
           {actionError}
         </p>
       ) : null}

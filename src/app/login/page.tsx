@@ -6,7 +6,45 @@ import { getSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { LoginGymBackdrop } from "@/components/login/LoginGymBackdrop";
 import { resolveLoginErrorMessage } from "@/lib/login-errors";
+
+function LoginLogoMark({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`afc-login-logo relative inline-flex h-[4.5rem] w-[4.5rem] items-center justify-center ${className}`}
+    >
+      <div
+        className="afc-login-logo__plate absolute inset-0 rounded-lg bg-gradient-to-br from-afc-gold-hot via-afc-gold to-afc-panel-2"
+        aria-hidden
+      />
+      <div
+        className="afc-login-logo__pin absolute -right-1 -top-1 h-3 w-3 rounded-full bg-afc-green-neon shadow-[0_0_12px_var(--afc-green-glow)]"
+        aria-hidden
+      />
+      <span className="afc-display relative text-lg font-bold text-afc-black">AFC</span>
+    </div>
+  );
+}
+
+function KickerReveal({ text, className = "" }: { text: string; className?: string }) {
+  const words = text.split(" ");
+
+  return (
+    <p className={`afc-login-kicker-reveal ${className}`}>
+      {words.map((word, index) => (
+        <span
+          key={`${word}-${index}`}
+          className="afc-login-kicker-word"
+          style={{ animationDelay: `${220 + index * 90}ms` }}
+        >
+          {word}
+          {index < words.length - 1 ? "\u00a0" : ""}
+        </span>
+      ))}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,137 +103,167 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="afc-gradient-bg relative flex min-h-screen flex-col overflow-hidden">
-      <div
-        className="pointer-events-none absolute -left-40 top-0 h-80 w-80 rounded-full bg-afc-red/15 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-afc-green/10 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/3 h-px w-[min(90%,48rem)] -translate-x-1/2 bg-gradient-to-r from-transparent via-afc-red/30 to-transparent"
-        aria-hidden
-      />
+    <div className="afc-login-page afc-gradient-bg relative flex min-h-screen min-h-[100dvh] flex-col overflow-hidden">
+      <div className="afc-login-glow afc-login-glow--gold" aria-hidden />
+      <div className="afc-login-glow afc-login-glow--green" aria-hidden />
 
       <div className="relative z-10 flex flex-1 flex-col lg:flex-row">
-        <section className="hidden flex-1 flex-col justify-center px-10 py-16 xl:px-20 xl:py-24 lg:flex">
-          <div className="max-w-xl">
-            <div className="relative mb-10 inline-flex h-[4.5rem] w-[4.5rem] items-center justify-center">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-afc-red via-afc-red-dark to-afc-panel-grey" />
-              <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-afc-green shadow-[0_0_12px_var(--afc-green-glow)]" />
-              <span className="relative text-base font-black tracking-tight text-afc-white">
-                AFC
-              </span>
+        <section className="afc-login-hero hidden flex-1 lg:flex">
+          <LoginGymBackdrop variant="hero" />
+
+          <div className="afc-login-hero__content">
+            <div
+              className="afc-animate-enter"
+              style={{ animationDelay: "80ms" }}
+            >
+              <LoginLogoMark />
             </div>
-            <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-afc-white xl:text-5xl">
+
+            <h1
+              className="afc-display afc-login-headline-reveal text-4xl font-bold leading-[1.05] tracking-tight text-afc-white xl:text-5xl"
+              style={{ animationDelay: "140ms" }}
+            >
               Adrenaline Fitness Center
             </h1>
-            <p className="mt-5 text-xl font-bold uppercase tracking-wide text-afc-red-hot">
-              Enter the training arena.
+
+            <KickerReveal
+              text="Train with intent."
+              className="afc-display mt-5 text-xl font-semibold tracking-wide text-afc-gold"
+            />
+
+            <p
+              className="afc-animate-enter mt-4 max-w-lg text-base leading-relaxed text-afc-muted"
+              style={{ animationDelay: "300ms" }}
+            >
+              The club operating system for coaches who track every rep, every
+              payment, and every athlete in one weight-room-grade command center.
             </p>
-            <p className="mt-4 text-base leading-relaxed text-afc-muted">
-              Manage performance, memberships, bookings, and progress from one
-              club operating system built for coaches who demand clarity.
-            </p>
-            <div className="mt-12 grid gap-3">
-              <div className="afc-glass flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-afc-soft-grey">
-                <span className="afc-status-pulse shrink-0" aria-hidden />
-                Live backend · Neon PostgreSQL
-              </div>
-              <div className="flex items-center gap-3 text-sm text-afc-soft-grey">
-                <span className="h-2 w-2 rounded-full bg-afc-red shadow-[0_0_8px_var(--afc-red-glow)]" />
-                Performance cockpit for owners & athletes
-              </div>
+
+            <div
+              className="afc-login-hero__lane afc-animate-enter mt-10"
+              style={{ animationDelay: "380ms" }}
+            >
+              <p className="afc-login-hero__lane-kicker">Iron Lanes</p>
+              <p className="afc-login-hero__lane-copy">
+                One lane for owners. One lane for athletes. Every session logged,
+                every roster move tracked.
+              </p>
             </div>
           </div>
         </section>
 
-        <section className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 sm:py-14">
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center lg:hidden">
-              <div className="relative mx-auto mb-4 flex h-14 w-14 items-center justify-center">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-afc-red to-afc-red-dark" />
-                <span className="relative text-xs font-black text-afc-white">AFC</span>
+        <section className="afc-login-form-col relative flex flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-12 lg:py-14">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
+            <LoginGymBackdrop variant="mobile" />
+          </div>
+
+          <div className="relative z-10 w-full max-w-md">
+            <div className="afc-login-mobile-brand mb-6 text-center lg:hidden">
+              <div
+                className="afc-animate-enter mx-auto w-fit"
+                style={{ animationDelay: "80ms" }}
+              >
+                <LoginLogoMark className="!h-14 !w-14 [&_.afc-display]:text-sm" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tight text-afc-white">
+              <h1
+                className="afc-display afc-login-headline-reveal mt-4 text-2xl font-bold tracking-tight text-afc-white"
+                style={{ animationDelay: "140ms" }}
+              >
                 Adrenaline Fitness Center
               </h1>
-              <p className="mt-2 text-sm font-semibold text-afc-red-hot">
-                Enter the training arena.
-              </p>
+              <KickerReveal
+                text="Train with intent."
+                className="afc-display mt-2 text-sm font-semibold text-afc-gold"
+              />
             </div>
 
-            <div className="afc-gradient-border">
-              <Card
-                accent="red"
-                variant="elevated"
-                title="Club access"
-                subtitle="Coach or athlete portal sign-in"
-                className="rounded-[1.125rem] border-0 shadow-none"
-              >
-                <form className="space-y-5" onSubmit={handleSubmit}>
-                  <Input
-                    label="Email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@afc.com"
-                    disabled={loading}
-                  />
-                  <Input
-                    label="Password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    disabled={loading}
-                  />
-
-                  {error ? (
-                    <p
-                      className="rounded-xl border border-afc-red/40 bg-afc-red/10 px-4 py-3 text-sm text-red-300"
-                      role="alert"
-                    >
-                      {error}
-                    </p>
-                  ) : null}
-
-                  <Button type="submit" fullWidth loading={loading} size="lg">
-                    {loading ? "Entering..." : "Enter arena"}
-                  </Button>
-                </form>
-              </Card>
-            </div>
-
-            <Card
-              padding="sm"
-              variant="glass"
-              accent="neutral"
-              className="mt-4"
-              title="Local test accounts"
-              subtitle="Development environment only"
+            <div
+              className="afc-animate-enter"
+              style={{ animationDelay: "280ms" }}
             >
-              <ul className="space-y-2.5 text-xs text-afc-soft-grey">
-                <li className="grid grid-cols-[4rem_1fr] gap-2 border-b border-afc-border-grey/50 pb-2">
-                  <span className="font-medium text-afc-light-grey">Owner</span>
-                  <span className="text-right">anwargreige@afc.com / 1234</span>
-                </li>
-                <li className="grid grid-cols-[4rem_1fr] gap-2 border-b border-afc-border-grey/50 pb-2">
-                  <span className="font-medium text-afc-light-grey">Admin</span>
-                  <span className="text-right">admin@afc.com / 1234</span>
-                </li>
-                <li className="grid grid-cols-[4rem_1fr] gap-2">
-                  <span className="font-medium text-afc-light-grey">Client</span>
-                  <span className="text-right">client@afc.com / 1234</span>
-                </li>
-              </ul>
-            </Card>
+              <div className="afc-gradient-border">
+                <Card
+                  accent="neutral"
+                  variant="elevated"
+                  title="Club access"
+                  subtitle="Coach or athlete sign-in"
+                  className="rounded-xl border-0 shadow-none"
+                >
+                  <form className="space-y-5" onSubmit={handleSubmit}>
+                    <Input
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@afc.com"
+                      disabled={loading}
+                    />
+                    <Input
+                      label="Password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      disabled={loading}
+                    />
+
+                    {error ? (
+                      <p
+                        className="rounded-xl border border-afc-red/40 bg-afc-red/10 px-4 py-3 text-sm text-red-300"
+                        role="alert"
+                      >
+                        {error}
+                      </p>
+                    ) : null}
+
+                    <Button
+                      type="submit"
+                      fullWidth
+                      loading={loading}
+                      size="lg"
+                      className="afc-login-submit"
+                    >
+                      {loading ? "Signing in..." : "Sign in"}
+                    </Button>
+                  </form>
+                </Card>
+              </div>
+            </div>
+
+            {process.env.NODE_ENV === "development" ? (
+              <details
+                className="afc-login-dev afc-animate-enter mt-6"
+                style={{ animationDelay: "360ms" }}
+              >
+                <summary className="afc-login-dev__summary">
+                  <span className="afc-login-dev__badge">Dev only</span>
+                  <span className="afc-login-dev__label">Local test accounts</span>
+                </summary>
+                <div className="afc-login-dev__body">
+                  <p className="afc-login-dev__hint">
+                    Development environment — never shown in production builds.
+                  </p>
+                  <ul className="afc-login-dev__list">
+                    <li>
+                      <span>Owner</span>
+                      <code>anwargreige@afc.com / 1234</code>
+                    </li>
+                    <li>
+                      <span>Admin</span>
+                      <code>admin@afc.com / 1234</code>
+                    </li>
+                    <li>
+                      <span>Client</span>
+                      <code>client@afc.com / 1234</code>
+                    </li>
+                  </ul>
+                </div>
+              </details>
+            ) : null}
           </div>
         </section>
       </div>

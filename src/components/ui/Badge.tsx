@@ -13,12 +13,12 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-afc-red/15 text-afc-red border-afc-red/35",
-  success: "bg-afc-green/15 text-afc-green border-afc-green/35",
-  danger: "bg-afc-red-dark/30 text-red-300 border-afc-red/40",
-  warning: "bg-amber-500/15 text-amber-300 border-amber-500/35",
-  neutral: "bg-afc-panel-grey text-afc-soft-grey border-afc-border-grey",
-  outline: "bg-transparent text-afc-soft-grey border-afc-border-grey",
+  default: "bg-afc-gold/12 text-afc-gold border-afc-gold/35 afc-badge-lane",
+  success: "bg-afc-green/12 text-afc-green-neon border-afc-green/35 afc-badge-lane",
+  danger: "bg-afc-red-dark/25 text-red-300 border-afc-red/40 afc-badge-lane",
+  warning: "bg-afc-amber/12 text-afc-amber border-afc-amber/35 afc-badge-lane",
+  neutral: "bg-afc-panel text-afc-soft-grey border-afc-border-grey afc-badge-lane",
+  outline: "bg-transparent text-afc-soft-grey border-afc-border-grey afc-badge-lane",
 };
 
 export function Badge({
@@ -28,7 +28,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantClasses[variant]} ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-sm border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantClasses[variant]} ${className}`}
     >
       {children}
     </span>

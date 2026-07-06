@@ -6,15 +6,17 @@ import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AddMeasurementModal } from "@/components/owner/AddMeasurementModal";
 import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
+import { SquadAmbientBackground } from "@/components/owner/SquadAmbientBackground";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataRow, EmptyState } from "@/components/ui/DataRow";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { HeroBand } from "@/components/ui/HeroBand";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { MacroCompositionRing } from "@/components/ui/MacroCompositionRing";
 import { PlayerCard } from "@/components/ui/PlayerCard";
-import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
@@ -434,25 +436,18 @@ function ClientDetailContent() {
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
-      <div className="space-y-6">
+      <div className="afc-squad-page afc-page-stack relative space-y-6">
+        <SquadAmbientBackground variant="detail" />
+
+        <div className="relative z-[1] space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/owner/clients"
-            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-red/40 hover:bg-afc-red/10 hover:text-afc-white"
+            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-gold/40 hover:bg-afc-gold/10 hover:text-afc-white"
           >
             <span aria-hidden>←</span>
             Back to squad
           </Link>
-
-          <div className="afc-glass inline-flex w-fit items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
-            <span className="afc-status-pulse shrink-0" aria-hidden />
-            <span className="text-xs text-afc-soft-grey">
-              Live data ·{" "}
-              <code className="font-mono text-afc-green">
-                GET /api/owner/clients/{clientId}
-              </code>
-            </span>
-          </div>
         </div>
 
         {loading ? (
@@ -471,11 +466,23 @@ function ClientDetailContent() {
           <ErrorState message={error} onRetry={handleRetry} />
         ) : data ? (
           <>
-            <ScoreboardHeader
+            <HeroBand
               kicker="Coach view"
-              title={data.user.fullName}
-              subtitle="Athlete profile · live performance data"
+              headline={`${displayUserStatus(data.user.status)} athlete profile — review membership, payments, and training data below.`}
+              detail={
+                data.profile?.fitnessGoal
+                  ? `Training goal: ${data.profile.fitnessGoal}`
+                  : assignedPlanName !== "No plan assigned"
+                    ? `Assigned plan: ${assignedPlanName}`
+                    : "No training goal on file yet."
+              }
               live
+              liveLabel="LIVE PROFILE"
+              footer={
+                <code className="afc-hero-band__api-chip">
+                  GET /api/owner/clients/{clientId}
+                </code>
+              }
             />
 
             <PlayerCard
@@ -498,7 +505,18 @@ function ClientDetailContent() {
                   value: formatDate(data.profile?.joinDate),
                 },
               ]}
-              accent="red"
+              accent={
+                data.user.status === "ACTIVE"
+                  ? "green"
+                  : "neutral"
+              }
+              avatarStatus={
+                data.user.status === "ACTIVE"
+                  ? "active"
+                  : data.user.status === "FROZEN"
+                    ? "frozen"
+                    : "inactive"
+              }
             />
 
             <ClientStatusPanel
@@ -518,13 +536,26 @@ function ClientDetailContent() {
               </div>
             ) : null}
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            <section>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <h2 className="afc-section-label">Athlete snapshot</h2>
+                {latestMeasurement ? (
+                  <MacroCompositionRing
+                    musclePercentage={latestMeasurement.musclePercentage}
+                    bodyFatPercentage={latestMeasurement.bodyFatPercentage}
+                    waterPercentage={latestMeasurement.waterPercentage}
+                  />
+                ) : null}
+              </div>
+              <div className="afc-stat-grid afc-stat-grid--compact">
               <StatCard
                 label="Membership"
                 value={activeSubscription?.status ?? "None"}
                 accent={
                   activeSubscription?.status === "ACTIVE" ? "success" : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={0}
               />
               <StatCard
                 label="Latest payment"
@@ -537,6 +568,8 @@ function ClientDetailContent() {
                       ? "danger"
                       : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={1}
               />
               <StatCard
                 label="Latest weight"
@@ -546,23 +579,30 @@ function ClientDetailContent() {
                     : "—"
                 }
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={2}
               />
               <StatCard
                 label="Latest BMI"
                 value={latestMeasurement?.bmi ?? "—"}
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={3}
               />
               <StatCard
                 label="Total bookings"
                 value={data.bookings.length}
                 accent="accent"
+                staggerIndex={4}
               />
               <StatCard
                 label="Completed sessions"
                 value={completedSessions}
                 accent="success"
+                staggerIndex={5}
               />
-            </div>
+              </div>
+            </section>
 
             <div className="grid gap-5 lg:grid-cols-2">
               <Card accent="neutral" title="Training profile" hover>
@@ -662,7 +702,7 @@ function ClientDetailContent() {
             </div>
 
             <Card
-              accent="red"
+              accent="neutral"
               title="Payment record"
               subtitle="Recent payment history"
               headerAction={
@@ -715,7 +755,10 @@ function ClientDetailContent() {
                   </div>
                 </>
               ) : (
-                <EmptyState message="No payment records yet." />
+                <EmptyState
+                  variant="payments"
+                  message="No payments logged for this athlete yet."
+                />
               )}
             </Card>
 
@@ -842,7 +885,10 @@ function ClientDetailContent() {
                   </div>
                 </div>
               ) : (
-                <EmptyState message="No measurements recorded yet." />
+                <EmptyState
+                  variant="measurements"
+                  message="Track their first measurement to start the progress trend."
+                />
               )}
             </Card>
 
@@ -897,7 +943,10 @@ function ClientDetailContent() {
                   </div>
                 </>
               ) : (
-                <EmptyState message="No bookings on file." />
+                <EmptyState
+                  variant="sessions"
+                  message="No sessions booked yet."
+                />
               )}
             </Card>
 
@@ -909,13 +958,17 @@ function ClientDetailContent() {
                   ))}
                 </ul>
               ) : (
-                <EmptyState message="No progress notes yet." />
+                <EmptyState
+                  variant="notes"
+                  message="Add your first note after their next session."
+                />
               )}
             </Card>
           </>
         ) : (
           <LoadingState message="Loading client profile..." />
         )}
+        </div>
       </div>
     </AppShell>
   );

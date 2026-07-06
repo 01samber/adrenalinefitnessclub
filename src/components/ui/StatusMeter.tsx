@@ -12,13 +12,19 @@ const fillClass: Record<MeterTone, string> = {
   neutral: "afc-meter__fill--neutral",
 };
 
-export function StatusMeter({ tone = "neutral", value = 72 }: StatusMeterProps) {
-  const width = Math.min(100, Math.max(12, value));
+export function StatusMeter({ tone = "neutral", value = 0 }: StatusMeterProps) {
+  const width = Math.min(100, Math.max(0, value));
 
   return (
-    <div className="afc-meter" aria-hidden>
+    <div
+      className="afc-meter"
+      role="progressbar"
+      aria-valuenow={width}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div
-        className={`afc-meter__fill ${fillClass[tone]}`}
+        className={`afc-meter__fill ${fillClass[tone]} afc-meter__fill--animate`}
         style={{ width: `${width}%` }}
       />
     </div>

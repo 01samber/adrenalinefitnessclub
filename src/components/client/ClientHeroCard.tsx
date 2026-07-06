@@ -39,13 +39,14 @@ export function ClientHeroCard({ data }: ClientHeroCardProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="afc-client-hero space-y-4 p-5 sm:p-6">
+      <div className="relative z-[1] flex flex-wrap items-center gap-2">
         <LiveStatusBadge label="LIVE DATA" />
       </div>
+      <div className="relative z-[1]">
       <PlayerCard
         name={data.user.fullName}
-        subtitle="Player Performance Hub · Adrenaline Fitness Center"
+        subtitle={data.profile?.fitnessGoal ? `Goal · ${data.profile.fitnessGoal}` : undefined}
         role="Athlete"
         statusBadge={
           subscription
@@ -59,8 +60,9 @@ export function ClientHeroCard({ data }: ClientHeroCardProps) {
         goal={data.profile?.fitnessGoal}
         chips={chips}
         accent="green"
-        avatarInitial={data.user.fullName.charAt(0)}
+        avatarStatus="active"
       />
+      </div>
     </div>
   );
 }

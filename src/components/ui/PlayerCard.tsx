@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
-import { StatusMeter } from "@/components/ui/StatusMeter";
+import { AfcAvatar } from "@/components/ui/AfcAvatar";
 
 type PlayerAccent = "red" | "green" | "neutral";
 
@@ -7,12 +7,15 @@ interface PlayerCardProps {
   name: string;
   subtitle?: string;
   role?: string;
-  statusBadge?: { label: string; variant: "success" | "warning" | "danger" | "neutral" | "outline" };
+  statusBadge?: {
+    label: string;
+    variant: "success" | "warning" | "danger" | "neutral" | "outline";
+  };
   planLabel?: string;
   goal?: string;
   chips?: { label: string; value: string; tone?: "green" | "default" }[];
   accent?: PlayerAccent;
-  avatarInitial?: string;
+  avatarStatus?: "active" | "frozen" | "inactive" | "pending";
 }
 
 export function PlayerCard({
@@ -23,10 +26,17 @@ export function PlayerCard({
   planLabel,
   goal,
   chips = [],
-  accent = "red",
-  avatarInitial,
+  accent = "neutral",
+  avatarStatus,
 }: PlayerCardProps) {
-  const initial = avatarInitial ?? name.charAt(0).toUpperCase();
+  const resolvedAvatarStatus =
+    avatarStatus ??
+    (statusBadge?.label === "Frozen"
+      ? "frozen"
+      : statusBadge?.label === "Active"
+        ? "active"
+        : "inactive");
+
   const accentClass =
     accent === "green"
       ? "afc-player-card--green"
@@ -40,10 +50,7 @@ export function PlayerCard({
       <div className="afc-player-card__edge afc-player-card__edge--br" aria-hidden />
 
       <div className="relative z-[1] flex flex-col gap-5 sm:flex-row sm:items-start">
-        <div className="afc-player-avatar">
-          <span className="afc-player-avatar__initial">{initial}</span>
-          <span className="afc-player-avatar__ring" aria-hidden />
-        </div>
+        <AfcAvatar name={name} status={resolvedAvatarStatus} size="hero" />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -54,7 +61,7 @@ export function PlayerCard({
             {planLabel ? <Badge variant="default">{planLabel}</Badge> : null}
           </div>
 
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-afc-white sm:text-3xl">
+          <h2 className="afc-display mt-3 text-2xl font-bold tracking-tight text-afc-white sm:text-3xl">
             {name}
           </h2>
           {subtitle ? (
@@ -81,11 +88,6 @@ export function PlayerCard({
               ))}
             </div>
           ) : null}
-
-          <StatusMeter
-            tone={accent === "green" ? "success" : accent === "neutral" ? "neutral" : "accent"}
-            value={accent === "green" ? 88 : 76}
-          />
         </div>
       </div>
     </article>

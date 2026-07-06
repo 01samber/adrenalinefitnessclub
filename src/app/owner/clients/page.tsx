@@ -4,17 +4,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ClientStatusActions } from "@/components/owner/ClientStatusActions";
+import { AfcAvatar, userStatusToAvatarStatus } from "@/components/ui/AfcAvatar";
+import { SquadAmbientBackground } from "@/components/owner/SquadAmbientBackground";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/DataRow";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
-import { LiveStatusBadge, StatCard } from "@/components/ui/StatCard";
+import { HeroBand } from "@/components/ui/HeroBand";
+import { StatCard } from "@/components/ui/StatCard";
 import { Select } from "@/components/ui/Select";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
+import { statMeterPercent } from "@/lib/stat-meter";
 import type {
   ClientListStatusFilter,
   OwnerClientListActiveSubscription,
@@ -308,17 +311,22 @@ interface ClientRowProps {
 function ClientMobileCard({
   client,
   onStatusChanged,
-}: ClientRowProps & { onStatusChanged: (message: string) => void }) {
+  rowIndex = 0,
+}: ClientRowProps & { onStatusChanged: (message: string) => void; rowIndex?: number }) {
   const { user, profile } = client;
   const planName = getAssignedPlanLabel(client);
-  const initial = user.fullName.charAt(0).toUpperCase();
 
   return (
-    <article className="afc-squad-card afc-surface afc-surface--hover">
+    <article
+      className={`afc-squad-card afc-surface afc-surface--hover afc-animate-row ${user.status === "FROZEN" ? "afc-squad-card--frozen" : ""}`}
+      style={{ animationDelay: `${rowIndex * 45}ms` }}
+    >
       <div className="flex items-start gap-3">
-        <div className="afc-squad-card__avatar" aria-hidden>
-          {initial}
-        </div>
+        <AfcAvatar
+          name={user.fullName}
+          status={userStatusToAvatarStatus(user.status)}
+          size="card"
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -382,17 +390,23 @@ function ClientMobileCard({
 function ClientDesktopRow({
   client,
   onStatusChanged,
-}: ClientRowProps & { onStatusChanged: (message: string) => void }) {
+  rowIndex = 0,
+}: ClientRowProps & { onStatusChanged: (message: string) => void; rowIndex?: number }) {
   const { user, profile } = client;
   const planName = getAssignedPlanLabel(client);
 
   return (
-    <tr className="afc-roster-row border-b border-afc-border-grey/50 last:border-b-0">
+    <tr
+      className="afc-roster-row afc-roster-row--hover afc-animate-row border-b border-afc-border-grey/50 last:border-b-0"
+      style={{ animationDelay: `${rowIndex * 40}ms` }}
+    >
       <td className="px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="afc-roster-row__avatar" aria-hidden>
-            {user.fullName.charAt(0).toUpperCase()}
-          </div>
+          <AfcAvatar
+            name={user.fullName}
+            status={userStatusToAvatarStatus(user.status)}
+            size="roster"
+          />
           <div className="min-w-0">
             <p className="font-semibold text-afc-white">{user.fullName}</p>
             <p className="mt-0.5 truncate text-sm text-afc-soft-grey">
@@ -525,9 +539,6 @@ function ClientsContent() {
   const frozenOnPage = countByStatus(items, "FROZEN");
 
   const hasFilters = Boolean(debouncedSearch.trim() || statusFilter);
-  const showingLabel = pagination
-    ? `${items.length} of ${pagination.total}`
-    : "—";
 
   const canGoPrevious = (pagination?.page ?? 1) > 1;
   const canGoNext =
@@ -535,33 +546,44 @@ function ClientsContent() {
     pagination.totalPages > 0 &&
     pagination.page < pagination.totalPages;
 
+  const listAnimationKey = `${page}-${statusFilter}-${debouncedSearch}`;
+
+  const statusFilterLabel =
+    STATUS_OPTIONS.find((option) => option.value === statusFilter)?.label ??
+    "All statuses";
+
+  const rosterHeadline = hasFilters
+    ? `Scouting the roster with filters applied — ${statusFilterLabel.toLowerCase()}${
+        debouncedSearch.trim() ? ` · matching “${debouncedSearch.trim()}”` : ""
+      }.`
+    : "Full squad roster — search, filter, and manage athletes in the workbench below.";
+
+  const rosterDetail =
+    pagination && pagination.total > 0
+      ? `Showing page ${pagination.page} of ${Math.max(pagination.totalPages, 1)} — all counts live in the stat grid.`
+      : "Counts and pagination update when athletes match your scout filters.";
+
   return (
     <AppShell
       title="Squad Management"
-      subtitle="Manage athletes, memberships, and training progress."
+      subtitle="Roster · memberships · progress"
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
-      <div className="afc-clients-page min-w-0 space-y-6">
-        <div className="afc-clients-page__hero hidden min-[480px]:block">
-          <ScoreboardHeader
-            kicker="Coach command"
-            title="Squad Management"
-            subtitle="Manage athletes, memberships, and training progress."
-            live
-            badge={<LiveStatusBadge label="LIVE ROSTER" />}
-          />
-        </div>
+      <div className="afc-squad-page afc-clients-page afc-page-stack relative min-w-0 space-y-6">
+        <SquadAmbientBackground variant="roster" />
 
-        <div className="afc-clients-page__live-chip">
-          <div className="afc-glass afc-live-chip inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
-            <span className="afc-status-pulse shrink-0" aria-hidden />
-            <span className="truncate text-xs text-afc-soft-grey">
-              Live data ·{" "}
-              <code className="font-mono text-afc-green">GET /api/owner/clients</code>
-            </span>
-          </div>
-        </div>
+        <div className="relative z-[1] min-w-0 space-y-6">
+        <HeroBand
+          kicker="Roster"
+          headline={rosterHeadline}
+          detail={rosterDetail}
+          live
+          liveLabel="LIVE ROSTER"
+          footer={
+            <code className="afc-hero-band__api-chip">GET /api/owner/clients</code>
+          }
+        />
 
         {successMessage ? (
           <div
@@ -572,15 +594,16 @@ function ClientsContent() {
           </div>
         ) : null}
 
-        <div>
+        <section>
           <h2 className="afc-section-label mb-4">Squad pulse</h2>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="afc-stat-grid afc-stat-grid--compact">
           <StatCard
             label="Squad size"
             value={pagination?.total ?? 0}
             hint={hasFilters ? "Matching scout filters" : "Full roster"}
             accent="accent"
             loading={loading && !data}
+            staggerIndex={0}
           />
           <StatCard
             label="Active athletes"
@@ -588,17 +611,27 @@ function ClientsContent() {
             hint="On current page"
             accent="success"
             loading={loading && !data}
+            meterPercent={statMeterPercent(
+              activeOnPage,
+              items.length || pagination?.total || 0,
+            )}
+            staggerIndex={1}
           />
           <StatCard
             label="Frozen roster"
             value={frozenOnPage}
             hint="On current page"
-            accent="danger"
+            accent={frozenOnPage > 0 ? "danger" : "neutral"}
             loading={loading && !data}
+            meterPercent={statMeterPercent(
+              frozenOnPage,
+              items.length || pagination?.total || 0,
+            )}
+            staggerIndex={2}
           />
           <StatCard
             label="Scout results"
-            value={showingLabel}
+            value={items.length}
             hint={
               pagination
                 ? `Page ${pagination.page} of ${Math.max(pagination.totalPages, 1)}`
@@ -606,16 +639,20 @@ function ClientsContent() {
             }
             accent="neutral"
             loading={loading && !data}
+            animateNumeric={false}
+            staggerIndex={3}
           />
           </div>
-        </div>
+        </section>
 
+        <div className="afc-data-panel afc-animate-enter">
         <Card
-          variant="elevated"
-          accent="red"
+          variant="default"
+          accent="neutral"
           title="Scout & recruit"
           subtitle="Filter the roster and add new athletes"
-          className="afc-clients-toolbar"
+          showSectionIcon={false}
+          className="afc-clients-toolbar !rounded-none !border-0 !shadow-none"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="grid flex-1 gap-4 sm:grid-cols-2">
@@ -684,9 +721,9 @@ function ClientsContent() {
           />
         ) : (
           <>
-            <div className="hidden xl:block">
-              <h2 className="afc-section-label mb-4">Active roster</h2>
-              <div className="afc-surface afc-roster-board">
+            <div className="hidden xl:block afc-data-panel__body">
+              <h2 className="afc-section-label mb-4 px-1">Active roster</h2>
+              <div className="afc-roster-board">
                 <p className="afc-roster-scroll-hint 2xl:hidden">
                   Scroll sideways to view all roster details
                 </p>
@@ -728,11 +765,12 @@ function ClientsContent() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {items.map((client) => (
+                    <tbody key={listAnimationKey} className="afc-roster-tbody">
+                      {items.map((client, index) => (
                         <ClientDesktopRow
                           key={client.user.id}
                           client={client}
+                          rowIndex={index}
                           onStatusChanged={handleStatusChanged}
                         />
                       ))}
@@ -742,18 +780,20 @@ function ClientsContent() {
               </div>
             </div>
 
-            <div className="space-y-4 xl:hidden">
-              <h2 className="afc-section-label">Squad cards</h2>
-              {items.map((client) => (
+            <div key={listAnimationKey} className="space-y-4 xl:hidden afc-data-panel__body">
+              <h2 className="afc-section-label px-1">Squad cards</h2>
+              {items.map((client, index) => (
                 <ClientMobileCard
                   key={client.user.id}
                   client={client}
+                  rowIndex={index}
                   onStatusChanged={handleStatusChanged}
                 />
               ))}
             </div>
           </>
         )}
+        </div>
 
         {!error && pagination && pagination.total > 0 ? (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -796,6 +836,7 @@ function ClientsContent() {
             </Button>
           </div>
         ) : null}
+        </div>
       </div>
     </AppShell>
   );

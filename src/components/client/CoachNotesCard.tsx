@@ -19,7 +19,7 @@ export function CoachNotesCard({
     progressNotes.length > 0 || coachAssessment || profileCoachNotes;
 
   return (
-    <Card accent="red" title="Coach feedback" subtitle="Guidance from your training team">
+    <Card accent="neutral" title="Coach feedback" subtitle="Guidance from your training team">
       {hasContent ? (
         <div className="space-y-4">
           {profileCoachNotes ? (
