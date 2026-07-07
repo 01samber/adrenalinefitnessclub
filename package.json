@@ -16,6 +16,7 @@
     "check:client-status": "tsx scripts/check-client-status.ts",
     "check:security-basics": "tsx scripts/check-security-basics.ts",
     "check:owner-client-list": "tsx scripts/check-owner-client-list.ts",
+    "check:owner-subscriptions": "tsx scripts/check-owner-subscriptions.ts",
     "check:owner-measurement": "tsx scripts/check-owner-measurement.ts"
   },
   "prisma": {

@@ -107,6 +107,71 @@ export interface ClientSubscription {
   plan: MembershipPlan;
 }
 
+export interface OwnerSubscriptionClientSummary {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string | null;
+  status: string;
+}
+
+export interface OwnerSubscriptionPlanSummary {
+  id: string;
+  name: string;
+  sessionsPerWeek: number;
+  monthlyPrice: string;
+  currency: string;
+  status?: "ACTIVE" | "INACTIVE";
+  isActive?: boolean;
+}
+
+export interface OwnerSubscriptionLatestPayment {
+  id: string;
+  amount: string;
+  currency: string;
+  status: string;
+  dueDate: string | null;
+  paidAt: string | null;
+  paymentMethod: string | null;
+}
+
+export interface OwnerSubscriptionListItem {
+  id: string;
+  clientId: string;
+  planId: string;
+  startDate: string;
+  endDate: string | null;
+  nextBillingDate: string;
+  status: string;
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+  client: OwnerSubscriptionClientSummary | null;
+  plan: OwnerSubscriptionPlanSummary | null;
+  latestPayment: OwnerSubscriptionLatestPayment | null;
+}
+
+export interface OwnerSubscriptionsSummary {
+  scope: "filtered" | "page";
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  cancelledSubscriptions: number;
+  expiredSubscriptions: number;
+  frozenSubscriptions: number;
+  activeMonthlyValue: string;
+  dueThisMonth: number;
+  overdueBilling: number;
+  collectedAmount: string;
+  unpaidAmount: string;
+  currency: string;
+  currencyMixed: boolean;
+}
+
+export interface OwnerSubscriptionsResponse
+  extends PaginatedResponse<OwnerSubscriptionListItem> {
+  summary: OwnerSubscriptionsSummary;
+}
+
 export interface ClientPayment {
   id: string;
   clientId: string;
