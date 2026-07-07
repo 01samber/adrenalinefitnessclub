@@ -24,7 +24,6 @@ import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import {
   PAYMENT_STATUS_OPTIONS,
   buildPaymentsUrl,
-  computePaymentPageSummary,
   formatBillingMonth,
   formatMonthlyStatusLabel,
   formatPaymentDate,
@@ -35,6 +34,8 @@ import {
   paymentCardAccentClass,
   paymentStatusBadgeVariant,
   resolvePaymentErrorMessage,
+  resolvePaymentSummaryLabel,
+  resolvePaymentsSummaryDisplay,
 } from "@/lib/payment-utils";
 import type {
   MonthSelection,
@@ -323,10 +324,28 @@ function PaymentsContent() {
     });
   }, [paymentsData?.items, debouncedSearch, clientMap]);
 
-  const pageSummary = useMemo(
-    () => computePaymentPageSummary(displayedPayments),
-    [displayedPayments],
+  const localSearchActive = debouncedSearch.trim().length > 0;
+  const hasDateFilter = Boolean(fromDate || toDate);
+
+  const summaryDisplay = useMemo(
+    () =>
+      resolvePaymentsSummaryDisplay(
+        paymentsData?.summary,
+        paymentsData?.items ?? [],
+      ),
+    [paymentsData?.summary, paymentsData?.items],
   );
+
+  const summaryLabel = resolvePaymentSummaryLabel({
+    summaryDisplay,
+    localSearchActive,
+    hasDateFilter,
+  });
+
+  const paymentsKpiLabel =
+    summaryDisplay.source === "filtered"
+      ? "Filtered payments"
+      : "Payments this month";
 
   const clientFilterOptions = useMemo(
     () => [
@@ -422,12 +441,7 @@ function PaymentsContent() {
   const totalPages = pagination?.totalPages ?? 0;
   const hasPayments = (paymentsData?.items.length ?? 0) > 0;
   const showingFilteredEmpty =
-    hasPayments && displayedPayments.length === 0 && debouncedSearch.trim().length > 0;
-  const usesPageOnlyPaymentSummary =
-    debouncedSearch.trim().length > 0 || (pagination?.totalPages ?? 0) > 1;
-  const summaryLabel = usesPageOnlyPaymentSummary
-    ? "Current page summary"
-    : "Filtered month summary";
+    hasPayments && displayedPayments.length === 0 && localSearchActive;
 
   return (
     <AppShell
@@ -480,30 +494,42 @@ function PaymentsContent() {
                   <div>
                     <h2 className="afc-section-label">Monthly summary</h2>
                     <p className="mt-1 text-xs text-afc-muted">{summaryLabel}</p>
+                    {summaryDisplay.currencyMixed ? (
+                      <p className="mt-1 text-xs text-amber-300/90">
+                        Mixed currencies detected. Totals are best-effort and should be
+                        reviewed by currency.
+                      </p>
+                    ) : null}
+                    {localSearchActive && summaryDisplay.source === "filtered" ? (
+                      <p className="mt-1 text-xs text-afc-muted">
+                        Search filters the visible page only ({displayedPayments.length}{" "}
+                        shown). KPI cards use backend filtered totals.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <div className="afc-stat-grid">
                   <StatCard
-                    label="Payments this month"
-                    value={pageSummary.totalCount}
+                    label={paymentsKpiLabel}
+                    value={summaryDisplay.totalPayments}
                     accent="accent"
                     staggerIndex={0}
                   />
                   <StatCard
                     label="Collected"
                     value={formatPaymentMoney(
-                      String(pageSummary.paidAmount),
-                      pageSummary.currency,
+                      summaryDisplay.paidAmount,
+                      summaryDisplay.currency,
                     )}
                     accent="success"
                     animateNumeric={false}
                     staggerIndex={1}
                   />
                   <StatCard
-                    label="Unpaid / Partial"
+                    label="Outstanding"
                     value={formatPaymentMoney(
-                      String(pageSummary.unpaidAmount + pageSummary.partialAmount),
-                      pageSummary.currency,
+                      summaryDisplay.outstandingAmount,
+                      summaryDisplay.currency,
                     )}
                     accent="accent"
                     animateNumeric={false}
@@ -512,8 +538,8 @@ function PaymentsContent() {
                   <StatCard
                     label="Overdue"
                     value={formatPaymentMoney(
-                      String(pageSummary.overdueAmount),
-                      pageSummary.currency,
+                      summaryDisplay.overdueAmount,
+                      summaryDisplay.currency,
                     )}
                     accent="danger"
                     animateNumeric={false}
@@ -523,16 +549,16 @@ function PaymentsContent() {
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <StatCard
                     label="Collection rate"
-                    value={`${pageSummary.collectionRate}%`}
-                    accent={pageSummary.collectionRate >= 70 ? "success" : "accent"}
+                    value={`${summaryDisplay.collectionRate}%`}
+                    accent={summaryDisplay.collectionRate >= 70 ? "success" : "accent"}
                     animateNumeric={false}
                     staggerIndex={4}
                   />
                   <StatCard
                     label="Unpaid only"
                     value={formatPaymentMoney(
-                      String(pageSummary.unpaidAmount),
-                      pageSummary.currency,
+                      summaryDisplay.unpaidAmount,
+                      summaryDisplay.currency,
                     )}
                     accent="accent"
                     animateNumeric={false}

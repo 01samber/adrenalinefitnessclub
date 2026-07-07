@@ -482,7 +482,7 @@ export interface OwnerPaymentsSummary {
 }
 
 export interface OwnerPaymentsResponse extends PaginatedResponse<OwnerPayment> {
-  summary: OwnerPaymentsSummary;
+  summary?: OwnerPaymentsSummary;
 }
 
 export interface CreatePaymentInput {

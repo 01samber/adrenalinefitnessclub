@@ -1,6 +1,7 @@
 import type {
   MonthSelection,
   OwnerPayment,
+  OwnerPaymentsSummary,
   PaymentMethod,
   PaymentPageSummary,
   PaymentStatus,
@@ -232,6 +233,81 @@ export function computePaymentPageSummary(items: OwnerPayment[]): PaymentPageSum
     collectionRate,
     currency,
   };
+}
+
+export type PaymentSummaryDisplay = {
+  totalPayments: number;
+  paidAmount: string;
+  unpaidAmount: string;
+  partialAmount: string;
+  outstandingAmount: string;
+  overdueAmount: string;
+  collectionRate: number;
+  currency: string;
+  currencyMixed: boolean;
+  source: "filtered" | "page";
+};
+
+function pageSummaryToDisplay(page: PaymentPageSummary): PaymentSummaryDisplay {
+  const outstanding =
+    page.unpaidAmount + page.partialAmount + page.overdueAmount;
+
+  return {
+    totalPayments: page.totalCount,
+    paidAmount: page.paidAmount.toFixed(2),
+    unpaidAmount: page.unpaidAmount.toFixed(2),
+    partialAmount: page.partialAmount.toFixed(2),
+    outstandingAmount: outstanding.toFixed(2),
+    overdueAmount: page.overdueAmount.toFixed(2),
+    collectionRate: page.collectionRate,
+    currency: page.currency,
+    currencyMixed: false,
+    source: "page",
+  };
+}
+
+function apiSummaryToDisplay(summary: OwnerPaymentsSummary): PaymentSummaryDisplay {
+  return {
+    totalPayments: summary.totalPayments,
+    paidAmount: summary.paidAmount,
+    unpaidAmount: summary.unpaidAmount,
+    partialAmount: summary.partialAmount,
+    outstandingAmount: summary.outstandingAmount,
+    overdueAmount: summary.overdueAmount,
+    collectionRate: summary.collectionRate,
+    currency: summary.currency,
+    currencyMixed: summary.currencyMixed,
+    source: "filtered",
+  };
+}
+
+export function resolvePaymentsSummaryDisplay(
+  apiSummary: OwnerPaymentsSummary | null | undefined,
+  pageItems: OwnerPayment[],
+): PaymentSummaryDisplay {
+  if (apiSummary?.scope === "filtered") {
+    return apiSummaryToDisplay(apiSummary);
+  }
+
+  return pageSummaryToDisplay(computePaymentPageSummary(pageItems));
+}
+
+export function resolvePaymentSummaryLabel(options: {
+  summaryDisplay: PaymentSummaryDisplay;
+  localSearchActive: boolean;
+  hasDateFilter: boolean;
+}): string {
+  if (options.summaryDisplay.source === "page") {
+    return options.localSearchActive
+      ? "Current page search summary"
+      : "Current page summary";
+  }
+
+  if (options.hasDateFilter) {
+    return "Filtered month summary";
+  }
+
+  return "Filtered summary";
 }
 
 export function buildPaymentsUrl(options: {
