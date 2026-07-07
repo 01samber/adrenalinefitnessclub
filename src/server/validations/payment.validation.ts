@@ -6,6 +6,19 @@ import {
   paginationQuerySchema,
 } from "@/server/validations/common.validation";
 
+const billingMonthSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "billingMonth must be YYYY-MM");
+
+const paymentSearchSchema = z
+  .string()
+  .trim()
+  .min(1, "search is required")
+  .max(100, "search must be at most 100 characters")
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
 const receivedPaymentStatuses = new Set<PaymentStatus>([
   PaymentStatus.PAID,
   PaymentStatus.PARTIAL,
@@ -45,6 +58,10 @@ export const paymentListQuerySchema = paginationQuerySchema.extend({
   clientId: idSchema.optional(),
   fromDate: dateStringSchema.optional(),
   toDate: dateStringSchema.optional(),
+  search: paymentSearchSchema,
+  billingMonth: billingMonthSchema
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;

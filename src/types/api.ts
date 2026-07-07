@@ -462,7 +462,28 @@ export interface OwnerPayment {
   updatedAt: string;
 }
 
-export type OwnerPaymentsResponse = PaginatedResponse<OwnerPayment>;
+export interface OwnerPaymentsSummary {
+  scope: "filtered";
+  totalPayments: number;
+  paidPayments: number;
+  unpaidPayments: number;
+  partialPayments: number;
+  overduePayments: number;
+  cancelledPayments: number;
+  paidAmount: string;
+  unpaidAmount: string;
+  partialAmount: string;
+  overdueAmount: string;
+  outstandingAmount: string;
+  totalExpectedAmount: string;
+  collectionRate: number;
+  currency: string;
+  currencyMixed: boolean;
+}
+
+export interface OwnerPaymentsResponse extends PaginatedResponse<OwnerPayment> {
+  summary: OwnerPaymentsSummary;
+}
 
 export interface CreatePaymentInput {
   clientId: string;
