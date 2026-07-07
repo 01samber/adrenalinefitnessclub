@@ -30,6 +30,8 @@ import {
   computeSubscriptionPageSummary,
   formatSubscriptionDate,
   formatSubscriptionMoney,
+  mapApiSummaryToPageSummary,
+  resolveSubscriptionSummaryLabel,
   resolveSubscriptionErrorMessage,
   subscriptionCardAccentClass,
 } from "@/lib/subscription-utils";
@@ -251,6 +253,8 @@ function SubscriptionsContent() {
             limit: PAGE_SIZE,
             status: statusFilter || undefined,
             clientId: clientFilter || undefined,
+            planId: planFilter || undefined,
+            search: debouncedSearch.trim() || undefined,
           }),
         );
 
@@ -276,7 +280,7 @@ function SubscriptionsContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, statusFilter, clientFilter, reloadKey]);
+  }, [page, statusFilter, clientFilter, planFilter, debouncedSearch, reloadKey]);
 
   const clientMap = useMemo(() => {
     const map = new Map<string, OwnerClientListItem>();
@@ -284,30 +288,25 @@ function SubscriptionsContent() {
     return map;
   }, [clients]);
 
-  const displayedSubscriptions = useMemo(() => {
-    let items = subscriptionsData?.items ?? [];
+  const displayedSubscriptions = useMemo(
+    () => subscriptionsData?.items ?? [],
+    [subscriptionsData?.items],
+  );
 
-    if (planFilter) {
-      items = items.filter((item) => item.planId === planFilter);
+  const pageSummary = useMemo(() => {
+    const rowSummary = computeSubscriptionPageSummary(displayedSubscriptions);
+    const apiSummary = subscriptionsData?.summary;
+
+    if (apiSummary?.scope === "filtered") {
+      return mapApiSummaryToPageSummary(apiSummary);
     }
 
-    const query = debouncedSearch.trim().toLowerCase();
-    if (!query) return items;
+    return rowSummary;
+  }, [displayedSubscriptions, subscriptionsData?.summary]);
 
-    return items.filter((item) => {
-      const client = clientMap.get(item.clientId);
-      if (!client) return false;
-      return (
-        client.user.fullName.toLowerCase().includes(query) ||
-        client.user.email.toLowerCase().includes(query) ||
-        item.plan?.name?.toLowerCase().includes(query)
-      );
-    });
-  }, [subscriptionsData?.items, planFilter, debouncedSearch, clientMap]);
-
-  const pageSummary = useMemo(
-    () => computeSubscriptionPageSummary(displayedSubscriptions),
-    [displayedSubscriptions],
+  const summaryLabel = resolveSubscriptionSummaryLabel(
+    subscriptionsData?.summary,
+    subscriptionsData?.summary?.scope !== "filtered",
   );
 
   const clientFilterOptions = useMemo(
@@ -324,7 +323,7 @@ function SubscriptionsContent() {
 
   const planFilterOptions = useMemo(
     () => [
-      { value: "", label: "All plans (current page)" },
+      { value: "", label: "All plans" },
       ...plans.map((plan) => ({
         value: plan.id,
         label: plan.name,
@@ -334,12 +333,20 @@ function SubscriptionsContent() {
     [plans],
   );
 
-  function getClientName(clientId: string) {
-    return clientMap.get(clientId)?.user.fullName ?? "Unknown athlete";
+  function getClientName(subscription: OwnerSubscriptionListItem) {
+    return (
+      subscription.client?.fullName ??
+      clientMap.get(subscription.clientId)?.user.fullName ??
+      "Unknown athlete"
+    );
   }
 
-  function getClientEmail(clientId: string) {
-    return clientMap.get(clientId)?.user.email ?? "—";
+  function getClientEmail(subscription: OwnerSubscriptionListItem) {
+    return (
+      subscription.client?.email ??
+      clientMap.get(subscription.clientId)?.user.email ??
+      "—"
+    );
   }
 
   function handleRetry() {
@@ -392,13 +399,8 @@ function SubscriptionsContent() {
   const pagination = subscriptionsData?.pagination;
   const hasSubscriptions = (subscriptionsData?.items.length ?? 0) > 0;
   const showingFilteredEmpty =
-    hasSubscriptions &&
-    displayedSubscriptions.length === 0 &&
-    (debouncedSearch.trim().length > 0 || Boolean(planFilter));
-  const summaryLabel =
-    pagination && pagination.totalPages <= 1
-      ? "Workspace summary"
-      : "Current page summary";
+    hasSubscriptions && displayedSubscriptions.length === 0;
+  const summaryLabelText = summaryLabel;
 
   return (
     <AppShell
@@ -422,7 +424,7 @@ function SubscriptionsContent() {
                 headline="Membership control — manage plans, billing dates, and athlete subscription status."
                 detail={
                   pagination
-                    ? `${summaryLabel} — page ${pagination.page} of ${Math.max(pagination.totalPages, 1)} (${pagination.total} record${pagination.total === 1 ? "" : "s"}).`
+                    ? `${summaryLabelText} — page ${pagination.page} of ${Math.max(pagination.totalPages, 1)} (${pagination.total} record${pagination.total === 1 ? "" : "s"}).`
                     : "Membership workspace ready for review."
                 }
                 live
@@ -447,7 +449,7 @@ function SubscriptionsContent() {
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <h2 className="afc-section-label">Membership summary</h2>
-                    <p className="mt-1 text-xs text-afc-muted">{summaryLabel}</p>
+                    <p className="mt-1 text-xs text-afc-muted">{summaryLabelText}</p>
                   </div>
                 </div>
                 <div className="afc-stat-grid">
@@ -499,11 +501,15 @@ function SubscriptionsContent() {
               <Card accent="neutral" title="Scout & manage" subtitle="Filter memberships and create new subscriptions">
                 <div className="afc-subscriptions-filters">
                   <Input
-                    label="Search loaded page"
+                    label="Search memberships"
                     value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder="Athlete, email, or plan"
-                    hint="Current page search only — backend text search is not available."
+                    onChange={(event) => {
+                      setSearchInput(event.target.value);
+                      setPage(1);
+                      setSuccessMessage("");
+                    }}
+                    placeholder="Athlete, email, or phone"
+                    hint="Server-side search across athlete name, email, and phone."
                   />
                   <Select
                     label="Status"
@@ -525,7 +531,7 @@ function SubscriptionsContent() {
                     label="Plan"
                     value={planFilter}
                     options={planFilterOptions}
-                    onChange={(value) => setPlanFilter(value)}
+                    onChange={(value) => handleFilterChange(setPlanFilter, value)}
                     usePlaceholderOption={false}
                     hint="Filters the current loaded page only."
                   />
@@ -570,10 +576,10 @@ function SubscriptionsContent() {
                               >
                                 <td className="px-4 py-3.5">
                                   <p className="font-medium text-afc-white">
-                                    {getClientName(subscription.clientId)}
+                                    {getClientName(subscription)}
                                   </p>
                                   <p className="text-sm text-afc-soft-grey">
-                                    {getClientEmail(subscription.clientId)}
+                                    {getClientEmail(subscription)}
                                   </p>
                                 </td>
                                 <td className="px-4 py-3.5 text-sm text-afc-white">
@@ -610,7 +616,7 @@ function SubscriptionsContent() {
                                 <td className="px-4 py-3.5">
                                   <SubscriptionActions
                                     subscription={subscription}
-                                    clientName={getClientName(subscription.clientId)}
+                                    clientName={getClientName(subscription)}
                                     busy={mutationLoading}
                                     onUpdate={openUpdateModal}
                                     onCancel={openCancelModal}
@@ -628,8 +634,8 @@ function SubscriptionsContent() {
                         <SubscriptionMobileCard
                           key={subscription.id}
                           subscription={subscription}
-                          clientName={getClientName(subscription.clientId)}
-                          clientEmail={getClientEmail(subscription.clientId)}
+                          clientName={getClientName(subscription)}
+                          clientEmail={getClientEmail(subscription)}
                           busy={mutationLoading}
                           onUpdate={openUpdateModal}
                           onCancel={openCancelModal}
@@ -698,7 +704,7 @@ function SubscriptionsContent() {
         key={`workspace-update-${updateModalKey}`}
         open={updateModalOpen}
         subscription={updateTarget}
-        clientName={updateTarget ? getClientName(updateTarget.clientId) : ""}
+        clientName={updateTarget ? getClientName(updateTarget) : ""}
         onClose={() => setUpdateModalOpen(false)}
         onSuccess={(message) => {
           setSuccessMessage(message);
@@ -710,7 +716,7 @@ function SubscriptionsContent() {
       <CancelSubscriptionConfirmModal
         open={cancelModalOpen}
         subscription={cancelTarget}
-        clientName={cancelTarget ? getClientName(cancelTarget.clientId) : ""}
+        clientName={cancelTarget ? getClientName(cancelTarget) : ""}
         loading={mutationLoading}
         onCancel={() => {
           if (!mutationLoading) {

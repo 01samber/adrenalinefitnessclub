@@ -423,10 +423,11 @@ function PaymentsContent() {
   const hasPayments = (paymentsData?.items.length ?? 0) > 0;
   const showingFilteredEmpty =
     hasPayments && displayedPayments.length === 0 && debouncedSearch.trim().length > 0;
-  const summaryLabel =
-    pagination && pagination.totalPages <= 1
-      ? "Selected month summary"
-      : "Current page summary";
+  const usesPageOnlyPaymentSummary =
+    debouncedSearch.trim().length > 0 || (pagination?.totalPages ?? 0) > 1;
+  const summaryLabel = usesPageOnlyPaymentSummary
+    ? "Current page summary"
+    : "Filtered month summary";
 
   return (
     <AppShell

@@ -1,6 +1,7 @@
 import { ApiClientError } from "@/lib/api-client";
 import type {
   OwnerSubscriptionListItem,
+  OwnerSubscriptionsSummary,
   SubscriptionPageSummary,
   SubscriptionStatus,
   SubscriptionStatusFilter,
@@ -114,14 +115,48 @@ export function buildSubscriptionsUrl(params: {
   limit?: number;
   status?: SubscriptionStatus;
   clientId?: string;
+  planId?: string;
+  search?: string;
+  billingMonth?: string;
 }) {
   const search = new URLSearchParams();
   if (params.page) search.set("page", String(params.page));
   if (params.limit) search.set("limit", String(params.limit));
   if (params.status) search.set("status", params.status);
   if (params.clientId) search.set("clientId", params.clientId);
+  if (params.planId) search.set("planId", params.planId);
+  if (params.search) search.set("search", params.search);
+  if (params.billingMonth) search.set("billingMonth", params.billingMonth);
   const query = search.toString();
   return query ? `/api/owner/subscriptions?${query}` : "/api/owner/subscriptions";
+}
+
+export function mapApiSummaryToPageSummary(
+  summary: OwnerSubscriptionsSummary,
+): SubscriptionPageSummary {
+  return {
+    totalCount: summary.totalSubscriptions,
+    activeCount: summary.activeSubscriptions,
+    cancelledCount: summary.cancelledSubscriptions,
+    expiredCount: summary.expiredSubscriptions,
+    frozenCount: summary.frozenSubscriptions,
+    activeMonthlyValue: Number(summary.activeMonthlyValue),
+    dueForBillingCount: summary.overdueBilling,
+    currency: summary.currency,
+  };
+}
+
+export function resolveSubscriptionSummaryLabel(
+  summary: OwnerSubscriptionsSummary | null | undefined,
+  usesPageRowsOnly: boolean,
+): string {
+  if (!usesPageRowsOnly && summary?.scope === "filtered") {
+    return summary.currencyMixed
+      ? "Filtered summary (mixed currencies)"
+      : "Filtered summary";
+  }
+
+  return "Current page summary";
 }
 
 export function computeSubscriptionPageSummary(
