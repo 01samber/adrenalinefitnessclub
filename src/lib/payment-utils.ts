@@ -1,4 +1,10 @@
-import type { PaymentMethod, PaymentPageSummary, PaymentStatus, OwnerPayment } from "@/types/api";
+import type {
+  MonthSelection,
+  OwnerPayment,
+  PaymentMethod,
+  PaymentPageSummary,
+  PaymentStatus,
+} from "@/types/api";
 
 export const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus | ""; label: string }[] = [
   { value: "", label: "All statuses" },
@@ -9,13 +15,10 @@ export const PAYMENT_STATUS_OPTIONS: { value: PaymentStatus | ""; label: string 
   { value: "CANCELLED", label: "Cancelled" },
 ];
 
-export const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
-  { value: "CASH", label: "Cash" },
+export const RECEIVED_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: "CARD", label: "Card" },
-  { value: "BANK_TRANSFER", label: "Bank transfer" },
-  { value: "WHISH", label: "Whish" },
+  { value: "CASH", label: "Cash" },
   { value: "OMT", label: "OMT" },
-  { value: "OTHER", label: "Other" },
 ];
 
 export const CREATE_PAYMENT_STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
@@ -24,6 +27,61 @@ export const CREATE_PAYMENT_STATUS_OPTIONS: { value: PaymentStatus; label: strin
   { value: "PARTIAL", label: "Partial" },
   { value: "OVERDUE", label: "Overdue" },
 ];
+
+const RECEIVED_METHOD_LABELS: Record<string, string> = {
+  CARD: "Card",
+  CASH: "Cash",
+  OMT: "OMT",
+};
+
+export function getCurrentMonthSelection(): MonthSelection {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
+export function monthSelectionToInputValue({ year, month }: MonthSelection) {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+export function parseMonthInputValue(value: string): MonthSelection {
+  const [year, month] = value.split("-").map(Number);
+  return { year, month };
+}
+
+export function shiftMonthSelection(
+  { year, month }: MonthSelection,
+  delta: number,
+): MonthSelection {
+  const date = new Date(year, month - 1 + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+export function formatMonthLabel({ year, month }: MonthSelection) {
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function getMonthDateRange({ year, month }: MonthSelection) {
+  const fromDate = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const toDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  return { fromDate, toDate };
+}
+
+export function defaultDueDateForMonth({ year, month }: MonthSelection) {
+  const now = new Date();
+  const isCurrentMonth =
+    now.getFullYear() === year && now.getMonth() + 1 === month;
+
+  if (isCurrentMonth) {
+    return now.toISOString().slice(0, 10);
+  }
+
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+}
 
 export function formatPaymentDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -34,6 +92,66 @@ export function formatPaymentDate(value: string | null | undefined) {
   });
 }
 
+export function formatBillingMonth(dueDate: string | null | undefined) {
+  if (!dueDate) return "No billing month";
+  return new Date(dueDate).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatMonthlyStatusLabel(
+  status: PaymentStatus,
+  dueDate: string | null | undefined,
+) {
+  const monthName = dueDate
+    ? new Date(dueDate).toLocaleDateString("en-US", { month: "long" })
+    : "this month";
+
+  switch (status) {
+    case "PAID":
+      return `Paid for ${monthName}`;
+    case "UNPAID":
+      return `Not paid for ${monthName}`;
+    case "PARTIAL":
+      return `Partially paid for ${monthName}`;
+    case "OVERDUE":
+      return `Overdue for ${monthName}`;
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return status;
+  }
+}
+
+export function requiresReceivedMethod(status: PaymentStatus) {
+  return status === "PAID" || status === "PARTIAL";
+}
+
+export function isRecordedReceivedMethod(method: string) {
+  return method === "CARD" || method === "CASH" || method === "OMT";
+}
+
+export function formatReceivedThrough(payment: OwnerPayment) {
+  const { status, paymentMethod } = payment;
+
+  if (status === "UNPAID" || status === "OVERDUE" || status === "CANCELLED") {
+    if (isRecordedReceivedMethod(paymentMethod)) {
+      return `Previously recorded · ${RECEIVED_METHOD_LABELS[paymentMethod]}`;
+    }
+    return "Pending receipt";
+  }
+
+  if (status === "PAID" || status === "PARTIAL") {
+    if (isRecordedReceivedMethod(paymentMethod)) {
+      return `Received through ${RECEIVED_METHOD_LABELS[paymentMethod]}`;
+    }
+    return "Method not recorded";
+  }
+
+  return "Pending receipt";
+}
+
 export function formatPaymentMoney(amount: string, currency: string) {
   const numeric = Number(amount);
   if (Number.isNaN(numeric)) return `${currency} ${amount}`;
@@ -42,10 +160,6 @@ export function formatPaymentMoney(amount: string, currency: string) {
     currency,
     maximumFractionDigits: 2,
   }).format(numeric);
-}
-
-export function formatPaymentMethod(method: string) {
-  return PAYMENT_METHOD_OPTIONS.find((option) => option.value === method)?.label ?? method;
 }
 
 export function paymentStatusBadgeVariant(
@@ -82,31 +196,40 @@ export function paymentCardAccentClass(status: string) {
 
 export function computePaymentPageSummary(items: OwnerPayment[]): PaymentPageSummary {
   let paidAmount = 0;
-  let pendingAmount = 0;
+  let unpaidAmount = 0;
+  let partialAmount = 0;
   let overdueAmount = 0;
+  let totalAmount = 0;
   const currency = items[0]?.currency ?? "USD";
 
   for (const payment of items) {
     const amount = Number(payment.amount);
     if (Number.isNaN(amount)) continue;
 
+    totalAmount += amount;
+
     if (payment.status === "PAID") {
       paidAmount += amount;
+    } else if (payment.status === "UNPAID") {
+      unpaidAmount += amount;
+    } else if (payment.status === "PARTIAL") {
+      partialAmount += amount;
     } else if (payment.status === "OVERDUE") {
       overdueAmount += amount;
-    } else if (
-      payment.status === "UNPAID" ||
-      payment.status === "PARTIAL"
-    ) {
-      pendingAmount += amount;
     }
   }
+
+  const collectionRate =
+    totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
 
   return {
     totalCount: items.length,
     paidAmount,
-    pendingAmount,
+    unpaidAmount,
+    partialAmount,
     overdueAmount,
+    totalAmount,
+    collectionRate,
     currency,
   };
 }
@@ -138,7 +261,11 @@ export function resolvePaymentErrorMessage(error: unknown) {
 }
 
 export function getAvailableStatusActions(currentStatus: PaymentStatus) {
-  const actions: { status: PaymentStatus; label: string; variant: "primary" | "secondary" | "danger" | "ghost" }[] = [];
+  const actions: {
+    status: PaymentStatus;
+    label: string;
+    variant: "primary" | "secondary" | "danger" | "ghost";
+  }[] = [];
 
   if (currentStatus !== "PAID") {
     actions.push({ status: "PAID", label: "Mark paid", variant: "primary" });
@@ -162,13 +289,13 @@ export function getAvailableStatusActions(currentStatus: PaymentStatus) {
 export function statusUpdateConfirmTitle(status: PaymentStatus) {
   switch (status) {
     case "PAID":
-      return "Mark payment as paid?";
+      return "Mark this payment as paid";
     case "UNPAID":
       return "Mark payment as unpaid?";
     case "OVERDUE":
       return "Mark payment as overdue?";
     case "PARTIAL":
-      return "Mark payment as partial?";
+      return "Mark this payment as partial";
     case "CANCELLED":
       return "Cancel this payment?";
     default:
@@ -179,7 +306,9 @@ export function statusUpdateConfirmTitle(status: PaymentStatus) {
 export function statusUpdateConfirmCopy(status: PaymentStatus) {
   switch (status) {
     case "PAID":
-      return "This will record the payment as received. Paid date will be set automatically if not already recorded.";
+      return "Record how the payment was received. This reflects the actual method the client used.";
+    case "PARTIAL":
+      return "Record how the partial payment was received.";
     case "CANCELLED":
       return "This payment will be marked cancelled and kept in the historical record.";
     case "OVERDUE":

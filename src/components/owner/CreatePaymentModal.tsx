@@ -7,13 +7,17 @@ import { Select } from "@/components/ui/Select";
 import { ApiClientError, apiGet, apiPost } from "@/lib/api-client";
 import {
   CREATE_PAYMENT_STATUS_OPTIONS,
-  PAYMENT_METHOD_OPTIONS,
+  RECEIVED_METHOD_OPTIONS,
+  defaultDueDateForMonth,
+  formatMonthLabel,
+  requiresReceivedMethod,
   resolvePaymentErrorMessage,
-  todayDateInputValue,
   toIsoDateTimeFromDateInput,
+  todayDateInputValue,
 } from "@/lib/payment-utils";
 import type {
   CreatePaymentResponse,
+  MonthSelection,
   OwnerClientListItem,
   OwnerSubscriptionListItem,
   OwnerSubscriptionsResponse,
@@ -24,6 +28,7 @@ import type {
 interface CreatePaymentModalProps {
   open: boolean;
   clients: OwnerClientListItem[];
+  selectedMonth: MonthSelection;
   onClose: () => void;
   onSuccess: (message: string) => void;
 }
@@ -35,21 +40,21 @@ interface FormState {
   currency: string;
   dueDate: string;
   status: PaymentStatus;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | "";
   paymentDate: string;
   notes: string;
 }
 
-function createInitialFormState(): FormState {
+function createInitialFormState(selectedMonth: MonthSelection): FormState {
   return {
     clientId: "",
     subscriptionId: "",
     amount: "",
     currency: "USD",
-    dueDate: todayDateInputValue(),
+    dueDate: defaultDueDateForMonth(selectedMonth),
     status: "UNPAID",
-    paymentMethod: "CASH",
-    paymentDate: "",
+    paymentMethod: "",
+    paymentDate: todayDateInputValue(),
     notes: "",
   };
 }
@@ -57,14 +62,19 @@ function createInitialFormState(): FormState {
 export function CreatePaymentModal({
   open,
   clients,
+  selectedMonth,
   onClose,
   onSuccess,
 }: CreatePaymentModalProps) {
-  const [values, setValues] = useState<FormState>(createInitialFormState);
+  const [values, setValues] = useState<FormState>(() =>
+    createInitialFormState(selectedMonth),
+  );
   const [subscriptions, setSubscriptions] = useState<OwnerSubscriptionListItem[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const showReceivedFields = requiresReceivedMethod(values.status);
 
   useEffect(() => {
     if (!open) return;
@@ -161,6 +171,16 @@ export function CreatePaymentModal({
         }
       }
 
+      if (key === "status") {
+        const status = value as PaymentStatus;
+        if (!requiresReceivedMethod(status)) {
+          next.paymentMethod = "";
+          next.paymentDate = "";
+        } else if (!next.paymentDate) {
+          next.paymentDate = todayDateInputValue();
+        }
+      }
+
       return next;
     });
     setSubmitError("");
@@ -187,25 +207,32 @@ export function CreatePaymentModal({
       setSubmitError("Currency must be a 3-letter code.");
       return;
     }
+    if (showReceivedFields && !values.paymentMethod) {
+      setSubmitError("Select how the payment was received.");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      await apiPost<CreatePaymentResponse>("/api/owner/payments", {
+      const payload: Record<string, unknown> = {
         clientId: values.clientId,
         subscriptionId: values.subscriptionId || null,
         amount,
         currency: values.currency.trim().toUpperCase(),
         dueDate: values.dueDate,
         status: values.status,
-        paymentMethod: values.paymentMethod,
-        paymentDate: values.paymentDate
-          ? toIsoDateTimeFromDateInput(values.paymentDate)
-          : values.status === "PAID"
-            ? new Date().toISOString()
-            : null,
         notes: values.notes.trim() || undefined,
-      });
+      };
+
+      if (showReceivedFields && values.paymentMethod) {
+        payload.paymentMethod = values.paymentMethod;
+        payload.paymentDate = values.paymentDate
+          ? toIsoDateTimeFromDateInput(values.paymentDate)
+          : new Date().toISOString();
+      }
+
+      await apiPost<CreatePaymentResponse>("/api/owner/payments", payload);
       onSuccess("Payment created successfully.");
       onClose();
     } catch (error) {
@@ -240,12 +267,12 @@ export function CreatePaymentModal({
         <div className="afc-measurement-modal__accent" aria-hidden />
 
         <header className="afc-measurement-modal__header">
-          <p className="afc-measurement-modal__kicker">Revenue tracking</p>
+          <p className="afc-measurement-modal__kicker">Monthly billing</p>
           <h2 id="create-payment-title" className="afc-measurement-modal__title">
             Create Payment
           </h2>
           <p id="create-payment-subtitle" className="afc-measurement-modal__subtitle">
-            Record a new payment for an athlete subscription or one-off charge.
+            Record a monthly payment for {formatMonthLabel(selectedMonth)}.
           </p>
           {selectedClient ? (
             <p className="afc-measurement-modal__client">{selectedClient.user.fullName}</p>
@@ -259,7 +286,8 @@ export function CreatePaymentModal({
         ) : null}
 
         <form className="afc-measurement-modal__form" onSubmit={handleSubmit} noValidate>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="afc-measurement-modal__body afc-modal-scroll">
+            <div className="grid gap-4 sm:grid-cols-2">
             <Select
               label="Athlete"
               value={values.clientId}
@@ -304,6 +332,7 @@ export function CreatePaymentModal({
               onChange={(event) => updateField("dueDate", event.target.value)}
               required
               disabled={loading}
+              hint={`Billing month: ${formatMonthLabel(selectedMonth)}`}
             />
             <Select
               label="Status"
@@ -313,41 +342,53 @@ export function CreatePaymentModal({
               disabled={loading}
               usePlaceholderOption={false}
             />
-            <Select
-              label="Payment method"
-              value={values.paymentMethod}
-              options={PAYMENT_METHOD_OPTIONS}
-              onChange={(value) => updateField("paymentMethod", value as PaymentMethod)}
-              disabled={loading}
-              usePlaceholderOption={false}
-            />
-            <Input
-              label="Paid date"
-              type="date"
-              value={values.paymentDate}
-              onChange={(event) => updateField("paymentDate", event.target.value)}
-              disabled={loading}
-              hint="Optional — auto-set when status is Paid"
-            />
-          </div>
+              {showReceivedFields ? (
+                <>
+                  <Select
+                    label="Payment received by"
+                    value={values.paymentMethod}
+                    options={RECEIVED_METHOD_OPTIONS}
+                    onChange={(value) => updateField("paymentMethod", value as PaymentMethod)}
+                    disabled={loading}
+                    placeholder="Select received method"
+                    hint="Record the actual method the client used."
+                  />
+                  <Input
+                    label="Paid date"
+                    type="date"
+                    value={values.paymentDate}
+                    onChange={(event) => updateField("paymentDate", event.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </>
+              ) : null}
+            </div>
 
-          <div className="mt-4">
-            <label
-              htmlFor="payment-notes"
-              className="mb-2 block text-sm font-medium text-afc-light-grey"
-            >
-              Notes
-            </label>
-            <textarea
-              id="payment-notes"
-              value={values.notes}
-              onChange={(event) => updateField("notes", event.target.value)}
-              disabled={loading}
-              rows={3}
-              maxLength={1000}
-              className="w-full rounded-lg border border-afc-border-grey bg-afc-black/50 px-4 py-3 text-base text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-gold focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-gold/25"
-              placeholder="Optional payment notes"
-            />
+            {!showReceivedFields ? (
+              <p className="afc-payment-method-helper">
+                Payment method will be recorded once the payment is received.
+              </p>
+            ) : null}
+
+            <div className="mt-4">
+              <label
+                htmlFor="payment-notes"
+                className="mb-2 block text-sm font-medium text-afc-light-grey"
+              >
+                Notes
+              </label>
+              <textarea
+                id="payment-notes"
+                value={values.notes}
+                onChange={(event) => updateField("notes", event.target.value)}
+                disabled={loading}
+                rows={3}
+                maxLength={1000}
+                className="w-full rounded-lg border border-afc-border-grey bg-afc-black/50 px-4 py-3 text-base text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-gold focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-gold/25"
+                placeholder="Optional payment notes"
+              />
+            </div>
           </div>
 
           <div className="afc-measurement-modal__actions">

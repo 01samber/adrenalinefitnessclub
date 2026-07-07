@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
+  RECEIVED_METHOD_OPTIONS,
   formatPaymentMoney,
+  requiresReceivedMethod,
   statusUpdateConfirmCopy,
   statusUpdateConfirmTitle,
 } from "@/lib/payment-utils";
-import type { OwnerPayment, PaymentStatus } from "@/types/api";
+import type { OwnerPayment, PaymentMethod, PaymentStatus } from "@/types/api";
 
 interface PaymentStatusConfirmModalProps {
   open: boolean;
@@ -16,7 +19,7 @@ interface PaymentStatusConfirmModalProps {
   clientName: string;
   loading: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (paymentMethod?: PaymentMethod) => void;
 }
 
 export function PaymentStatusConfirmModal({
@@ -28,11 +31,15 @@ export function PaymentStatusConfirmModal({
   onCancel,
   onConfirm,
 }: PaymentStatusConfirmModalProps) {
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | "">("");
+
   if (!open || !payment || !nextStatus) {
     return null;
   }
 
   const isDanger = nextStatus === "CANCELLED" || nextStatus === "OVERDUE";
+  const needsMethod = requiresReceivedMethod(nextStatus);
+  const canConfirm = !needsMethod || Boolean(selectedMethod);
 
   return (
     <div
@@ -68,6 +75,32 @@ export function PaymentStatusConfirmModal({
           {statusUpdateConfirmCopy(nextStatus)}
         </p>
 
+        {needsMethod ? (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-afc-muted">
+              How was the payment received?
+            </p>
+            <div className="afc-received-method-grid">
+              {RECEIVED_METHOD_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={selectedMethod === option.value ? "primary" : "secondary"}
+                  size="md"
+                  className={`afc-received-method-btn ${selectedMethod === option.value ? "afc-received-method-btn--active" : ""}`}
+                  onClick={() => setSelectedMethod(option.value)}
+                  disabled={loading}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            <p className="afc-payment-method-helper">
+              Card is recorded only — no online gateway is processed in this app.
+            </p>
+          </div>
+        ) : null}
+
         <div className="afc-status-modal__actions">
           <Button
             type="button"
@@ -82,8 +115,9 @@ export function PaymentStatusConfirmModal({
             type="button"
             variant={isDanger ? "danger" : "primary"}
             size="md"
-            onClick={onConfirm}
+            onClick={() => onConfirm(selectedMethod || undefined)}
             loading={loading}
+            disabled={!canConfirm}
           >
             Confirm update
           </Button>

@@ -6,21 +6,37 @@ import {
   paginationQuerySchema,
 } from "@/server/validations/common.validation";
 
-export const createPaymentSchema = z.object({
-  clientId: idSchema,
-  subscriptionId: idSchema.nullable().optional(),
-  amount: z.coerce.number().positive(),
-  currency: z.string().trim().length(3).default("USD"),
-  paymentDate: z.string().datetime().nullable().optional(),
-  dueDate: dateStringSchema,
-  status: z.nativeEnum(PaymentStatus).default(PaymentStatus.UNPAID),
-  paymentMethod: z.nativeEnum(PaymentMethod),
-  notes: z.string().max(1000).optional(),
-});
+const receivedPaymentStatuses = new Set<PaymentStatus>([
+  PaymentStatus.PAID,
+  PaymentStatus.PARTIAL,
+]);
+
+export const createPaymentSchema = z
+  .object({
+    clientId: idSchema,
+    subscriptionId: idSchema.nullable().optional(),
+    amount: z.coerce.number().positive(),
+    currency: z.string().trim().length(3).default("USD"),
+    paymentDate: z.string().datetime().nullable().optional(),
+    dueDate: dateStringSchema,
+    status: z.nativeEnum(PaymentStatus).default(PaymentStatus.UNPAID),
+    paymentMethod: z.nativeEnum(PaymentMethod).optional(),
+    notes: z.string().max(1000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (receivedPaymentStatuses.has(data.status) && !data.paymentMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Payment method is required when status is PAID or PARTIAL",
+        path: ["paymentMethod"],
+      });
+    }
+  });
 
 export const updatePaymentStatusSchema = z.object({
   status: z.nativeEnum(PaymentStatus),
   paymentDate: z.string().datetime().nullable().optional(),
+  paymentMethod: z.nativeEnum(PaymentMethod).optional(),
   notes: z.string().max(1000).optional(),
 });
 

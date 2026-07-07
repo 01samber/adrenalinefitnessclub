@@ -1,4 +1,4 @@
-import { PaymentStatus, UserRole } from "@prisma/client";
+import { PaymentMethod, PaymentStatus, UserRole } from "@prisma/client";
 import { NotFoundError } from "@/lib/api-errors";
 import prisma from "@/lib/prisma";
 import { createAuditLog } from "@/server/services/audit-log.service";
@@ -67,7 +67,7 @@ export async function createPayment(
       paymentDate: input.paymentDate ? new Date(input.paymentDate) : null,
       dueDate: toDateOnly(input.dueDate),
       status: input.status,
-      paymentMethod: input.paymentMethod,
+      paymentMethod: input.paymentMethod ?? PaymentMethod.OTHER,
       notes: input.notes ?? null,
     },
   });
@@ -106,6 +106,10 @@ export async function updatePaymentStatus(
           : input.status === PaymentStatus.PAID && !existing.paymentDate
             ? new Date()
             : existing.paymentDate,
+      paymentMethod:
+        input.paymentMethod !== undefined
+          ? input.paymentMethod
+          : existing.paymentMethod,
       notes: input.notes ?? existing.notes,
     },
   });

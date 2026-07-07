@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { CreatePaymentModal } from "@/components/owner/CreatePaymentModal";
+import { MonthlyStatusLabel, ReceivedThroughBadge } from "@/components/owner/PaymentDisplayHelpers";
+import { PaymentMonthSelector } from "@/components/owner/PaymentMonthSelector";
 import { PaymentStatusConfirmModal } from "@/components/owner/PaymentStatusConfirmModal";
 import { PaymentsAmbientBackground } from "@/components/owner/PaymentsAmbientBackground";
 import { PaymentsWorkspaceSkeleton } from "@/components/owner/PaymentsWorkspaceSkeleton";
@@ -23,15 +25,19 @@ import {
   PAYMENT_STATUS_OPTIONS,
   buildPaymentsUrl,
   computePaymentPageSummary,
+  formatBillingMonth,
+  formatMonthlyStatusLabel,
   formatPaymentDate,
-  formatPaymentMethod,
   formatPaymentMoney,
   getAvailableStatusActions,
+  getCurrentMonthSelection,
+  getMonthDateRange,
   paymentCardAccentClass,
   paymentStatusBadgeVariant,
   resolvePaymentErrorMessage,
 } from "@/lib/payment-utils";
 import type {
+  MonthSelection,
   OwnerClientListItem,
   OwnerClientsData,
   OwnerPayment,
@@ -40,6 +46,7 @@ import type {
   OwnerSubscriptionsResponse,
   PaymentStatus,
   PaymentStatusFilter,
+  PaymentMethod,
   UpdatePaymentStatusResponse,
 } from "@/types/api";
 
@@ -123,6 +130,10 @@ function PaymentMobileCard({
         {formatPaymentMoney(payment.amount, payment.currency)}
       </p>
 
+      <div className="mt-3">
+        <MonthlyStatusLabel payment={payment} />
+      </div>
+
       <dl className="afc-payment-card__meta">
         <div className="afc-payment-card__row">
           <dt>Due date</dt>
@@ -137,8 +148,10 @@ function PaymentMobileCard({
           <dd>{planLabel}</dd>
         </div>
         <div className="afc-payment-card__row">
-          <dt>Method</dt>
-          <dd>{formatPaymentMethod(payment.paymentMethod)}</dd>
+          <dt>Received through</dt>
+          <dd>
+            <ReceivedThroughBadge payment={payment} />
+          </dd>
         </div>
       </dl>
 
@@ -155,13 +168,23 @@ function PaymentMobileCard({
 }
 
 function PaymentsContent() {
+  const [selectedMonth, setSelectedMonth] = useState<MonthSelection>(
+    getCurrentMonthSelection,
+  );
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>("");
   const [clientFilter, setClientFilter] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [advancedFromDate, setAdvancedFromDate] = useState("");
+  const [advancedToDate, setAdvancedToDate] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const monthRange = useMemo(
+    () => getMonthDateRange(selectedMonth),
+    [selectedMonth],
+  );
+  const fromDate = advancedFromDate || monthRange.fromDate;
+  const toDate = advancedToDate || monthRange.toDate;
 
   const [paymentsData, setPaymentsData] = useState<OwnerPaymentsResponse | null>(null);
   const [clients, setClients] = useState<OwnerClientListItem[]>([]);
@@ -267,7 +290,7 @@ function PaymentsContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, statusFilter, clientFilter, fromDate, toDate, reloadKey]);
+  }, [page, statusFilter, clientFilter, fromDate, toDate, reloadKey, selectedMonth]);
 
   const clientMap = useMemo(() => {
     const map = new Map<string, OwnerClientListItem>();
@@ -359,7 +382,15 @@ function PaymentsContent() {
     setStatusModalOpen(true);
   }
 
-  async function confirmStatusUpdate() {
+  function handleMonthChange(month: MonthSelection) {
+    setSelectedMonth(month);
+    setAdvancedFromDate("");
+    setAdvancedToDate("");
+    setPage(1);
+    setSuccessMessage("");
+  }
+
+  async function confirmStatusUpdate(paymentMethod?: PaymentMethod) {
     if (!statusTarget || !nextStatus) return;
 
     setStatusUpdating(true);
@@ -369,7 +400,10 @@ function PaymentsContent() {
     try {
       await apiPatch<UpdatePaymentStatusResponse>(
         `/api/owner/payments/${statusTarget.id}/status`,
-        { status: nextStatus },
+        {
+          status: nextStatus,
+          ...(paymentMethod ? { paymentMethod } : {}),
+        },
       );
       setSuccessMessage(`Payment marked as ${nextStatus.toLowerCase()}.`);
       setStatusModalOpen(false);
@@ -389,11 +423,15 @@ function PaymentsContent() {
   const hasPayments = (paymentsData?.items.length ?? 0) > 0;
   const showingFilteredEmpty =
     hasPayments && displayedPayments.length === 0 && debouncedSearch.trim().length > 0;
+  const summaryLabel =
+    pagination && pagination.totalPages <= 1
+      ? "Selected month summary"
+      : "Current page summary";
 
   return (
     <AppShell
-      title="Payments Workspace"
-      subtitle="Track athlete payments, dues, and revenue status."
+      title="Monthly Payment Ledger"
+      subtitle="Track who paid, who is pending, and how much revenue is still outstanding."
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
@@ -407,13 +445,18 @@ function PaymentsContent() {
             <ErrorState message={error} onRetry={handleRetry} />
           ) : (
             <>
+              <PaymentMonthSelector
+                value={selectedMonth}
+                onChange={handleMonthChange}
+              />
+
               <HeroBand
                 kicker="Revenue desk"
-                headline="Track athlete payments, dues, and collection status across your squad."
+                headline="Monthly payment ledger — see who paid, who is pending, and what is still outstanding."
                 detail={
                   pagination
-                    ? `Showing page ${pagination.page} of ${Math.max(pagination.totalPages, 1)} — ${pagination.total} payment record${pagination.total === 1 ? "" : "s"} in ledger.`
-                    : "Payment ledger ready for review."
+                    ? `${summaryLabel} for selected month — page ${pagination.page} of ${Math.max(pagination.totalPages, 1)} (${pagination.total} record${pagination.total === 1 ? "" : "s"}).`
+                    : "Monthly payment ledger ready for review."
                 }
                 live
                 liveLabel="LIVE LEDGER"
@@ -434,21 +477,19 @@ function PaymentsContent() {
               <section>
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <h2 className="afc-section-label">Revenue summary</h2>
-                    <p className="mt-1 text-xs text-afc-muted">
-                      Current page summary — totals reflect loaded payments only.
-                    </p>
+                    <h2 className="afc-section-label">Monthly summary</h2>
+                    <p className="mt-1 text-xs text-afc-muted">{summaryLabel}</p>
                   </div>
                 </div>
                 <div className="afc-stat-grid">
                   <StatCard
-                    label="Total payments"
+                    label="Payments this month"
                     value={pageSummary.totalCount}
                     accent="accent"
                     staggerIndex={0}
                   />
                   <StatCard
-                    label="Paid amount"
+                    label="Collected"
                     value={formatPaymentMoney(
                       String(pageSummary.paidAmount),
                       pageSummary.currency,
@@ -458,9 +499,9 @@ function PaymentsContent() {
                     staggerIndex={1}
                   />
                   <StatCard
-                    label="Pending amount"
+                    label="Unpaid / Partial"
                     value={formatPaymentMoney(
-                      String(pageSummary.pendingAmount),
+                      String(pageSummary.unpaidAmount + pageSummary.partialAmount),
                       pageSummary.currency,
                     )}
                     accent="accent"
@@ -468,7 +509,7 @@ function PaymentsContent() {
                     staggerIndex={2}
                   />
                   <StatCard
-                    label="Overdue amount"
+                    label="Overdue"
                     value={formatPaymentMoney(
                       String(pageSummary.overdueAmount),
                       pageSummary.currency,
@@ -478,9 +519,28 @@ function PaymentsContent() {
                     staggerIndex={3}
                   />
                 </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <StatCard
+                    label="Collection rate"
+                    value={`${pageSummary.collectionRate}%`}
+                    accent={pageSummary.collectionRate >= 70 ? "success" : "accent"}
+                    animateNumeric={false}
+                    staggerIndex={4}
+                  />
+                  <StatCard
+                    label="Unpaid only"
+                    value={formatPaymentMoney(
+                      String(pageSummary.unpaidAmount),
+                      pageSummary.currency,
+                    )}
+                    accent="accent"
+                    animateNumeric={false}
+                    staggerIndex={5}
+                  />
+                </div>
               </section>
 
-              <Card accent="neutral" title="Scout & collect" subtitle="Filter the ledger and record new payments">
+              <Card accent="neutral" title="Scout & collect" subtitle="Filter this month's ledger and record payments">
                 <div className="afc-payments-filters">
                   <Input
                     label="Search loaded page"
@@ -506,18 +566,6 @@ function PaymentsContent() {
                     placeholder="All statuses"
                     id="payment-status-trigger"
                   />
-                  <Input
-                    label="Due from"
-                    type="date"
-                    value={fromDate}
-                    onChange={(event) => handleFilterChange(setFromDate, event.target.value)}
-                  />
-                  <Input
-                    label="Due to"
-                    type="date"
-                    value={toDate}
-                    onChange={(event) => handleFilterChange(setToDate, event.target.value)}
-                  />
                   <div className="afc-payments-filters__actions flex flex-wrap gap-2">
                     <Button
                       type="button"
@@ -539,6 +587,30 @@ function PaymentsContent() {
                     </Button>
                   </div>
                 </div>
+
+                <details className="afc-payments-advanced">
+                  <summary>Advanced date range</summary>
+                  <div className="afc-payments-advanced__grid">
+                    <Input
+                      label="Custom due from"
+                      type="date"
+                      value={advancedFromDate}
+                      onChange={(event) =>
+                        handleFilterChange(setAdvancedFromDate, event.target.value)
+                      }
+                      hint="Overrides month range when set"
+                    />
+                    <Input
+                      label="Custom due to"
+                      type="date"
+                      value={advancedToDate}
+                      onChange={(event) =>
+                        handleFilterChange(setAdvancedToDate, event.target.value)
+                      }
+                      hint="Overrides month range when set"
+                    />
+                  </div>
+                </details>
               </Card>
 
               <section>
@@ -570,7 +642,7 @@ function PaymentsContent() {
                           Scroll sideways to view all payment details
                         </p>
                         <div className="afc-roster-scroll afc-scrollbar">
-                          <table className="afc-roster-table afc-data-table w-full min-w-[72rem] text-left">
+                          <table className="afc-roster-table afc-data-table w-full min-w-[80rem] text-left">
                             <thead>
                               <tr className="border-b border-afc-border-grey/70 bg-afc-black/30">
                                 <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
@@ -580,7 +652,7 @@ function PaymentsContent() {
                                   Amount
                                 </th>
                                 <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                                  Status
+                                  Monthly status
                                 </th>
                                 <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
                                   Due date
@@ -589,10 +661,13 @@ function PaymentsContent() {
                                   Paid date
                                 </th>
                                 <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                                  Billing month
+                                </th>
+                                <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
                                   Plan
                                 </th>
                                 <th className="px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
-                                  Method
+                                  Received through
                                 </th>
                                 <th className="afc-roster-actions-head px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
                                   Actions
@@ -620,9 +695,14 @@ function PaymentsContent() {
                                     {formatPaymentMoney(payment.amount, payment.currency)}
                                   </td>
                                   <td className="px-4 py-4">
-                                    <Badge variant={paymentStatusBadgeVariant(payment.status)}>
-                                      {payment.status}
-                                    </Badge>
+                                    <div className="space-y-2">
+                                      <Badge variant={paymentStatusBadgeVariant(payment.status)}>
+                                        {payment.status}
+                                      </Badge>
+                                      <p className="text-xs text-afc-light-grey">
+                                        {formatMonthlyStatusLabel(payment.status, payment.dueDate)}
+                                      </p>
+                                    </div>
                                   </td>
                                   <td className="px-4 py-4 text-sm text-afc-light-grey">
                                     {formatPaymentDate(payment.dueDate)}
@@ -630,11 +710,14 @@ function PaymentsContent() {
                                   <td className="px-4 py-4 text-sm text-afc-light-grey">
                                     {formatPaymentDate(payment.paymentDate)}
                                   </td>
+                                  <td className="px-4 py-4 text-sm text-afc-light-grey">
+                                    {formatBillingMonth(payment.dueDate)}
+                                  </td>
                                   <td className="max-w-[10rem] px-4 py-4 text-sm text-afc-light-grey">
                                     <span className="line-clamp-2">{getPlanLabel(payment)}</span>
                                   </td>
                                   <td className="px-4 py-4 text-sm text-afc-light-grey">
-                                    {formatPaymentMethod(payment.paymentMethod)}
+                                    <ReceivedThroughBadge payment={payment} />
                                   </td>
                                   <td className="afc-roster-actions px-4 py-4">
                                     <PaymentActions
@@ -707,9 +790,10 @@ function PaymentsContent() {
       </div>
 
       <CreatePaymentModal
-        key={createModalKey}
+        key={`${createModalKey}-${selectedMonth.year}-${selectedMonth.month}`}
         open={createModalOpen}
         clients={clients}
+        selectedMonth={selectedMonth}
         onClose={() => setCreateModalOpen(false)}
         onSuccess={(message) => {
           setSuccessMessage(message);
@@ -718,6 +802,7 @@ function PaymentsContent() {
       />
 
       <PaymentStatusConfirmModal
+        key={statusTarget && nextStatus ? `${statusTarget.id}-${nextStatus}` : "closed"}
         open={statusModalOpen}
         payment={statusTarget}
         nextStatus={nextStatus}
@@ -729,7 +814,7 @@ function PaymentsContent() {
           setStatusTarget(null);
           setNextStatus(null);
         }}
-        onConfirm={() => void confirmStatusUpdate()}
+        onConfirm={(paymentMethod) => void confirmStatusUpdate(paymentMethod)}
       />
     </AppShell>
   );

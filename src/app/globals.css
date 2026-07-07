@@ -1662,6 +1662,29 @@ body {
   border-radius: 999px;
 }
 
+.afc-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 142, 100, 0.42) rgba(0, 0, 0, 0.28);
+}
+
+.afc-modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 142, 100, 0.42);
+  border-radius: 999px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.5);
+}
+
 /* ─── Status confirmation modal ───────────────────────────────────────────── */
 
 .afc-status-modal {
@@ -1787,7 +1810,7 @@ body {
   display: flex;
   flex-direction: column;
   width: min(100%, 42rem);
-  max-height: min(92vh, 52rem);
+  max-height: min(92vh, 860px);
   overflow: hidden;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1872,6 +1895,15 @@ body {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+.afc-measurement-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .afc-measurement-form {
@@ -2016,18 +2048,50 @@ body {
 
 .afc-measurement-modal__actions {
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding: 1rem 1.25rem 1.25rem;
+  padding: 1rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(11, 14, 19, 0.92) 0%,
+    rgba(11, 14, 19, 0.98) 100%
+  );
 }
 
 .afc-measurement-modal__actions button {
   min-height: 44px;
   min-width: 7.5rem;
+}
+
+@media (max-width: 480px) {
+  .afc-measurement-modal {
+    align-items: flex-end;
+    padding: max(0.5rem, env(safe-area-inset-top))
+      max(0.5rem, env(safe-area-inset-right))
+      max(0.5rem, env(safe-area-inset-bottom))
+      max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .afc-measurement-modal__panel {
+    width: 100%;
+    max-height: min(92dvh, 860px);
+    border-radius: 1rem 1rem 0.75rem 0.75rem;
+  }
+
+  .afc-measurement-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .afc-measurement-modal__actions button {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .afc-measurement-history {
@@ -4388,12 +4452,6 @@ body {
   gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .afc-payments-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (min-width: 1280px) {
   .afc-payments-filters {
     grid-template-columns: 1.4fr 1fr 0.8fr 0.8fr auto;
@@ -4411,5 +4469,178 @@ body {
   .afc-payments-ambient__receipt,
   .afc-payments-ambient__card {
     animation: none !important;
+  }
+}
+
+.afc-payment-month {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid var(--afc-border-grey);
+  background: linear-gradient(
+    165deg,
+    rgba(28, 33, 41, 0.98) 0%,
+    rgba(8, 9, 12, 0.99) 100%
+  );
+  padding: 1.25rem 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.afc-payment-month::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--afc-gold), var(--afc-amber));
+}
+
+.afc-payment-month__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.afc-payment-month__title {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--afc-white);
+}
+
+.afc-payment-month__subtitle {
+  margin-top: 0.5rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--afc-muted);
+}
+
+.afc-payment-month__controls {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-payment-month__picker {
+  min-width: 0;
+}
+
+.afc-payment-month__input {
+  min-height: 44px;
+  width: min(100%, 11rem);
+  border-radius: 0.625rem;
+  border: 1px solid var(--afc-border-grey);
+  background: rgba(8, 9, 12, 0.65);
+  padding: 0.625rem 0.875rem;
+  color: var(--afc-white);
+  font-size: 0.875rem;
+}
+
+.afc-payment-month__input:focus {
+  outline: 2px solid var(--afc-gold);
+  outline-offset: 2px;
+}
+
+.afc-payment-method-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(240, 180, 41, 0.28);
+  background: rgba(240, 180, 41, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--afc-gold-hot);
+}
+
+.afc-payment-method-recorded {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  background: rgba(46, 204, 113, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--afc-green-neon);
+}
+
+.afc-payment-method-missing {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 156, 168, 0.28);
+  background: rgba(148, 156, 168, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--afc-muted);
+}
+
+.afc-received-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.afc-received-method-btn {
+  min-height: 44px;
+}
+
+.afc-received-method-btn--active {
+  box-shadow: 0 0 0 1px var(--afc-gold), 0 0 18px var(--afc-gold-glow);
+}
+
+.afc-payment-method-helper {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--afc-muted);
+}
+
+.afc-payments-advanced {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1rem;
+}
+
+.afc-payments-advanced summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--afc-muted);
+}
+
+.afc-payments-advanced__grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .afc-payments-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .afc-payments-advanced__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

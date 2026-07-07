@@ -394,6 +394,7 @@ export type CreatePaymentResponse = OwnerPayment;
 export interface UpdatePaymentStatusInput {
   status: PaymentStatus;
   paymentDate?: string | null;
+  paymentMethod?: PaymentMethod;
   notes?: string;
 }
 
@@ -419,7 +420,15 @@ export type OwnerSubscriptionsResponse =
 export interface PaymentPageSummary {
   totalCount: number;
   paidAmount: number;
-  pendingAmount: number;
+  unpaidAmount: number;
+  partialAmount: number;
   overdueAmount: number;
+  totalAmount: number;
+  collectionRate: number;
   currency: string;
+}
+
+export interface MonthSelection {
+  year: number;
+  month: number;
 }
