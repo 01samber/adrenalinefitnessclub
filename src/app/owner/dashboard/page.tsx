@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { DashboardAmbient } from "@/components/owner/DashboardAmbient";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
-import { GrowthTrendBadge, LiveStatusBadge, StatCard } from "@/components/ui/StatCard";
+import { HeroBand } from "@/components/ui/HeroBand";
+import { GrowthTrendBadge, StatCard } from "@/components/ui/StatCard";
+import { HeroControlIcon } from "@/components/ui/StatTileIcon";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
+import { statMeterPercent } from "@/lib/stat-meter";
+import { clientGrowthTrendDetail } from "@/lib/hero-context";
 import type { OwnerDashboardData } from "@/types/api";
 
 function formatCurrency(value: number) {
@@ -67,115 +71,131 @@ function OwnerDashboardContent() {
     };
   }, [reloadKey]);
 
+  const total = data?.totalClients ?? 0;
+  const active = data?.activeClients ?? 0;
+  const frozen = data?.frozenClients ?? 0;
+  const unpaid = data?.unpaidPaymentsCount ?? 0;
+  const overdue = data?.overduePaymentsCount ?? 0;
+
   return (
     <AppShell
-      title="Club Control Center"
-      subtitle="Live performance data from Adrenaline Fitness Center"
+      title="Control Center"
+      subtitle="Club operations · live pulse"
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
       {error ? (
         <ErrorState message={error} onRetry={handleRetry} />
       ) : (
-        <div className="space-y-6">
-          <ScoreboardHeader
-            kicker="AFC Club OS"
-            title="Club Control Center"
-            subtitle="Membership, payments, and squad performance at a glance."
-            live
-            badge={<LiveStatusBadge label="LIVE CLUB DATA" />}
-          />
+        <div className="afc-dashboard-page afc-page-stack relative space-y-6">
+          <DashboardAmbient />
 
-          <Card
-            variant="elevated"
-            accent="green"
-            title="Live backend connection"
-            subtitle="Neon PostgreSQL synced · command center online"
-            headerAction={<LiveStatusBadge />}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-afc-soft-grey">
-                Real-time KPIs from your production database layer.
-              </p>
-              <code className="inline-flex w-fit items-center rounded-lg border border-afc-border-grey bg-afc-black/50 px-3 py-1.5 font-mono text-xs text-afc-green">
+          <div className="relative z-[1] space-y-6">
+          <HeroBand
+            kicker="Operations"
+            kickerIcon={<HeroControlIcon />}
+            headline="Club-wide pulse — squad health, revenue, and session volume in one view."
+            detail={
+              !loading && data
+                ? clientGrowthTrendDetail(data.clientGrowthTrend)
+                : "Connecting to live club data…"
+            }
+            live
+            liveLabel="LIVE CLUB DATA"
+            footer={
+              <code className="afc-hero-band__api-chip">
                 GET /api/owner/dashboard
               </code>
-            </div>
-          </Card>
+            }
+          />
 
-          <div>
+          <section>
             <h2 className="afc-section-label mb-4">Performance pulse</h2>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            <StatCard
-              label="Squad size"
-              value={data?.totalClients ?? 0}
-              accent="neutral"
-              loading={loading}
-            />
-            <StatCard
-              label="Active athletes"
-              value={data?.activeClients ?? 0}
-              accent="success"
-              loading={loading}
-            />
-            <StatCard
-              label="Frozen roster"
-              value={data?.frozenClients ?? 0}
-              accent="danger"
-              loading={loading}
-            />
-            <StatCard
-              label="Monthly score"
-              value={
-                loading ? "—" : formatCurrency(data?.totalRevenueThisMonth ?? 0)
-              }
-              accent="success"
-              loading={loading}
-            />
-            <StatCard
-              label="Payment alerts"
-              value={data?.unpaidPaymentsCount ?? 0}
-              accent="danger"
-              loading={loading}
-            />
-            <StatCard
-              label="Overdue"
-              value={data?.overduePaymentsCount ?? 0}
-              accent="danger"
-              loading={loading}
-            />
-            <StatCard
-              label="Upcoming sessions"
-              value={data?.upcomingBookingsCount ?? 0}
-              accent="accent"
-              loading={loading}
-            />
-            <StatCard
-              label="Completed sessions"
-              value={data?.completedBookingsThisMonth ?? 0}
-              hint="This month"
-              accent="neutral"
-              loading={loading}
-            />
-            <StatCard
-              label="New sign-ups"
-              value={data?.newClientsThisMonth ?? 0}
-              accent="success"
-              loading={loading}
-            />
-          </div>
-          </div>
+            <div className="afc-stat-grid">
+              <StatCard
+                label="Squad size"
+                value={total}
+                accent="neutral"
+                loading={loading}
+                staggerIndex={0}
+              />
+              <StatCard
+                label="Active athletes"
+                value={active}
+                accent="success"
+                loading={loading}
+                meterPercent={statMeterPercent(active, total)}
+                staggerIndex={1}
+              />
+              <StatCard
+                label="Frozen roster"
+                value={frozen}
+                accent={frozen > 0 ? "danger" : "neutral"}
+                loading={loading}
+                meterPercent={statMeterPercent(frozen, total)}
+                staggerIndex={2}
+              />
+              <StatCard
+                label="Monthly score"
+                value={loading ? "—" : formatCurrency(data?.totalRevenueThisMonth ?? 0)}
+                accent="accent"
+                loading={loading}
+                animateNumeric={false}
+                staggerIndex={3}
+              />
+              <StatCard
+                label="Payment alerts"
+                value={unpaid}
+                accent={unpaid > 0 ? "danger" : "neutral"}
+                loading={loading}
+                meterPercent={statMeterPercent(unpaid, total)}
+                staggerIndex={4}
+              />
+              <StatCard
+                label="Overdue"
+                value={overdue}
+                accent={overdue > 0 ? "danger" : "neutral"}
+                loading={loading}
+                meterPercent={statMeterPercent(overdue, total)}
+                staggerIndex={5}
+              />
+              <StatCard
+                label="Upcoming sessions"
+                value={data?.upcomingBookingsCount ?? 0}
+                accent="accent"
+                loading={loading}
+                staggerIndex={6}
+              />
+              <StatCard
+                label="Completed sessions"
+                value={data?.completedBookingsThisMonth ?? 0}
+                hint="This month"
+                accent="neutral"
+                loading={loading}
+                staggerIndex={7}
+              />
+              <StatCard
+                label="New sign-ups"
+                value={data?.newClientsThisMonth ?? 0}
+                accent="success"
+                loading={loading}
+                staggerIndex={8}
+              />
+            </div>
+          </section>
 
           {!loading && data ? (
             <Card
               variant="glass"
-              accent="green"
+              accent="neutral"
               hover
               title="Squad momentum"
               subtitle="Athlete growth trend based on new sign-ups this month"
               headerAction={<GrowthTrendBadge trend={data.clientGrowthTrend} />}
+              className="afc-animate-enter"
             />
           ) : null}
+          </div>
         </div>
       )}
     </AppShell>

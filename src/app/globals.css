@@ -1,37 +1,55 @@
 @import "tailwindcss";
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
-  --afc-black: #050505;
-  --afc-charcoal: #0b0e13;
-  --afc-stadium-dark: #111827;
-  --afc-panel: #171c24;
-  --afc-panel-2: #202633;
-  --afc-border: rgba(255, 255, 255, 0.1);
+  /* Iron Lanes — Pit floor, rack steel, gold plate accents */
+  --afc-black: #08090c;
+  --afc-charcoal: #0e1014;
+  --afc-stadium-dark: #12151a;
+  --afc-panel: #161a21;
+  --afc-panel-2: #1c2129;
+  --afc-border: rgba(255, 255, 255, 0.07);
 
-  --afc-red: #e11d2e;
-  --afc-red-hot: #ff2d3d;
-  --afc-red-dark: #991b1b;
-  --afc-red-glow: rgba(225, 29, 46, 0.28);
+  --afc-gold: #f0b429;
+  --afc-gold-hot: #ffc94d;
+  --afc-gold-dark: #c48f12;
+  --afc-gold-muted: #a68b3d;
+  --afc-gold-glow: rgba(240, 180, 41, 0.22);
+  --afc-gold-muted-glow: rgba(166, 139, 61, 0.16);
 
-  --afc-green: #22c55e;
-  --afc-green-neon: #39ff88;
-  --afc-green-dark: #15803d;
-  --afc-green-glow: rgba(34, 197, 94, 0.24);
+  --afc-red: #f05252;
+  --afc-red-hot: #ef4444;
+  --afc-red-dark: #9f1f1f;
+  --afc-red-glow: rgba(217, 43, 43, 0.24);
 
-  --afc-silver: #cbd5e1;
-  --afc-muted: #94a3b8;
-  --afc-white: #ffffff;
+  --afc-green: #2ecc71;
+  --afc-green-neon: #3ddc84;
+  --afc-green-dark: #1f9d55;
+  --afc-green-glow: rgba(46, 204, 113, 0.2);
 
-  /* Legacy aliases — keep existing class names working */
+  --afc-amber: #e8a317;
+  --afc-amber-glow: rgba(232, 163, 23, 0.2);
+
+  --afc-silver: #e8eaed;
+  --afc-muted: #949ca8;
+  --afc-white: #f8f9fa;
+
+  /* Legacy aliases — keep existing Tailwind class names working */
   --afc-dark-grey: var(--afc-stadium-dark);
   --afc-panel-grey: var(--afc-panel);
-  --afc-border-grey: #343a46;
+  --afc-border-grey: #2a3038;
   --afc-soft-grey: var(--afc-muted);
   --afc-light-grey: var(--afc-silver);
 
-  --background: #050505;
+  --background: var(--afc-black);
   --foreground: var(--afc-silver);
-  --afc-sidebar-width: 18rem;
+  --afc-sidebar-width: 17.5rem;
+  --font-display: var(--font-oswald), "Arial Narrow", sans-serif;
 }
 
 @theme inline {
@@ -42,6 +60,7 @@
   --color-afc-stadium-dark: var(--afc-stadium-dark);
   --color-afc-panel: var(--afc-panel);
   --color-afc-panel-2: var(--afc-panel-2);
+  --color-afc-border: var(--afc-border);
   --color-afc-dark-grey: var(--afc-dark-grey);
   --color-afc-panel-grey: var(--afc-panel-grey);
   --color-afc-border-grey: var(--afc-border-grey);
@@ -56,8 +75,14 @@
   --color-afc-green-neon: var(--afc-green-neon);
   --color-afc-green-dark: var(--afc-green-dark);
   --color-afc-white: var(--afc-white);
+  --color-afc-gold: var(--afc-gold);
+  --color-afc-gold-hot: var(--afc-gold-hot);
+  --color-afc-gold-dark: var(--afc-gold-dark);
+  --color-afc-gold-muted: var(--afc-gold-muted);
+  --color-afc-amber: var(--afc-amber);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-oswald), "Arial Narrow", sans-serif;
 }
 
 * {
@@ -81,13 +106,222 @@ body {
 }
 
 ::selection {
-  background: var(--afc-red-glow);
+  background: var(--afc-gold-glow);
   color: var(--afc-white);
 }
 
 :focus-visible {
-  outline: 2px solid var(--afc-red);
+  outline: 2px solid var(--afc-gold);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.afc-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.afc-lane-pin {
+  position: relative;
+}
+
+.afc-lane-pin::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--afc-gold-hot) 70%, var(--afc-gold-muted)),
+    var(--afc-gold-muted),
+    color-mix(in srgb, var(--afc-gold-dark) 80%, var(--afc-gold-muted))
+  );
+  border-radius: 3px 0 0 3px;
+}
+
+/* ─── Status badges (short lane chip — distinct from full card pins) ─────── */
+
+.afc-badge-lane {
+  position: relative;
+  border-left-width: 0;
+  padding-left: 0.625rem;
+}
+
+.afc-badge-lane::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 62%;
+  border-radius: 1px;
+  transform: translateY(-50%);
+  background: currentColor;
+  opacity: 0.9;
+}
+
+/* ─── Empty & error states ────────────────────────────────────────────────── */
+
+.afc-empty-state {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px dashed var(--afc-border-grey);
+  background: linear-gradient(
+    165deg,
+    rgba(22, 26, 33, 0.6) 0%,
+    rgba(8, 9, 12, 0.75) 100%
+  );
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.afc-empty-state--payments {
+  border-color: rgba(240, 180, 41, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(240, 180, 41, 0.04) 0%,
+    rgba(8, 9, 12, 0.78) 100%
+  );
+}
+
+.afc-empty-state--measurements {
+  border-color: rgba(46, 204, 113, 0.2);
+  background: linear-gradient(
+    165deg,
+    rgba(46, 204, 113, 0.04) 0%,
+    rgba(8, 9, 12, 0.78) 100%
+  );
+}
+
+.afc-empty-state--sessions {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(148, 163, 184, 0.05) 0%,
+    rgba(8, 9, 12, 0.78) 100%
+  );
+}
+
+.afc-empty-state--notes {
+  border-color: rgba(240, 180, 41, 0.16);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(8, 9, 12, 0.78) 100%
+  );
+}
+
+.afc-empty-state__icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--afc-muted);
+  opacity: 0.8;
+}
+
+.afc-empty-state--payments .afc-empty-state__icon {
+  color: var(--afc-gold-muted);
+}
+
+.afc-empty-state--measurements .afc-empty-state__icon {
+  color: var(--afc-green-neon);
+  opacity: 0.75;
+}
+
+.afc-empty-state--sessions .afc-empty-state__icon {
+  color: var(--afc-silver);
+}
+
+.afc-empty-state--notes .afc-empty-state__icon {
+  color: var(--afc-gold-muted);
+  opacity: 0.7;
+}
+
+.afc-empty-state::before {
+  display: none;
+}
+
+.afc-empty-state__message {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--afc-muted);
+}
+
+.afc-error-state {
+  position: relative;
+  overflow: hidden;
+  margin-inline: auto;
+  max-width: 32rem;
+  padding: 2rem 1.5rem;
+  padding-left: 1.625rem;
+  text-align: center;
+}
+
+.afc-error-state::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    var(--afc-red-hot),
+    var(--afc-red),
+    var(--afc-red-dark)
+  );
+}
+
+.afc-error-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(240, 82, 82, 0.35);
+  background: rgba(240, 82, 82, 0.12);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--afc-red);
+}
+
+.afc-error-state__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--afc-white);
+}
+
+.afc-error-state__message {
+  margin: 0.5rem auto 0;
+  max-width: 20rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--afc-muted);
 }
 
 /* ─── App shell & backgrounds ─────────────────────────────────────────────── */
@@ -95,9 +329,8 @@ body {
 .afc-shell {
   position: relative;
   background:
-    radial-gradient(circle at 10% 10%, rgba(225, 29, 46, 0.18), transparent 28rem),
-    radial-gradient(circle at 90% 85%, rgba(34, 197, 94, 0.12), transparent 30rem),
-    linear-gradient(135deg, #050505 0%, #0b0e13 45%, #111827 100%);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(240, 180, 41, 0.06), transparent 50%),
+    linear-gradient(180deg, var(--afc-black) 0%, var(--afc-charcoal) 100%);
 }
 
 .afc-shell::before {
@@ -106,20 +339,24 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
+  opacity: 0.18;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, black 20%, transparent 85%);
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.02) 3px,
+      rgba(255, 255, 255, 0.02) 4px
+    );
+  mask-image: linear-gradient(180deg, black 0%, transparent 85%);
 }
 
 .afc-gradient-bg {
   position: relative;
   background:
-    radial-gradient(circle at 10% 10%, rgba(225, 29, 46, 0.22), transparent 32rem),
-    radial-gradient(circle at 90% 90%, rgba(34, 197, 94, 0.14), transparent 30rem),
-    linear-gradient(160deg, #050505 0%, #0b0e13 40%, #111827 100%);
+    radial-gradient(ellipse 70% 60% at 20% 0%, rgba(240, 180, 41, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(217, 43, 43, 0.06), transparent 50%),
+    linear-gradient(165deg, var(--afc-black) 0%, var(--afc-stadium-dark) 55%, var(--afc-charcoal) 100%);
 }
 
 .afc-gradient-bg::before {
@@ -128,11 +365,11 @@ body {
   inset: 0;
   pointer-events: none;
   background: repeating-linear-gradient(
-    -12deg,
+    90deg,
     transparent,
-    transparent 40px,
-    rgba(255, 255, 255, 0.015) 40px,
-    rgba(255, 255, 255, 0.015) 41px
+    transparent 79px,
+    rgba(240, 180, 41, 0.04) 79px,
+    rgba(240, 180, 41, 0.04) 80px
   );
 }
 
@@ -149,15 +386,15 @@ body {
   position: relative;
   overflow: hidden;
   background: linear-gradient(
-    155deg,
-    rgba(36, 41, 50, 0.72) 0%,
-    rgba(20, 23, 28, 0.92) 100%
+    165deg,
+    rgba(28, 33, 41, 0.95) 0%,
+    rgba(18, 21, 26, 0.98) 100%
   );
-  border: 1px solid rgba(52, 58, 70, 0.85);
-  border-radius: 1.125rem;
+  border: 1px solid var(--afc-border-grey);
+  border-radius: 0.75rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 40px rgba(0, 0, 0, 0.38);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .afc-surface::before {
@@ -234,8 +471,8 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, var(--afc-border-grey), transparent 80%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--afc-gold), transparent 70%);
 }
 
 .afc-gradient-border {
@@ -251,9 +488,9 @@ body {
   border-radius: inherit;
   background: linear-gradient(
     135deg,
-    rgba(225, 29, 46, 0.45),
-    rgba(52, 58, 70, 0.4) 40%,
-    rgba(34, 197, 94, 0.35)
+    rgba(240, 180, 41, 0.55),
+    rgba(42, 48, 56, 0.5) 45%,
+    rgba(240, 180, 41, 0.25)
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -274,11 +511,13 @@ body {
 }
 
 .afc-sidebar {
-  background:
-    linear-gradient(180deg, rgba(225, 29, 46, 0.1) 0%, transparent 14%),
-    linear-gradient(180deg, #111827 0%, #0b0e13 55%, #050505 100%);
-  border-right: 1px solid var(--afc-border);
-  box-shadow: 16px 0 48px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(
+    180deg,
+    var(--afc-stadium-dark) 0%,
+    var(--afc-black) 100%
+  );
+  border-right: 1px solid var(--afc-border-grey);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
 }
 
 .afc-sidebar-brand::after {
@@ -289,7 +528,7 @@ body {
   height: 7rem;
   width: 7rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(225, 29, 46, 0.35), transparent 70%);
+  background: radial-gradient(circle, rgba(240, 180, 41, 0.15), transparent 70%);
   pointer-events: none;
 }
 
@@ -299,56 +538,197 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
   min-height: 2.875rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--afc-muted);
   transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
+    background 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.24s ease,
+    box-shadow 0.24s ease,
+    transform 0.2s ease;
 }
 
-.afc-nav-item:hover:not(.afc-nav-item--disabled) {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--afc-white);
-  transform: translateX(2px);
+.afc-nav-item__main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.afc-nav-item__locked-meta {
+  display: inline-flex;
+  shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.afc-nav-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  color: var(--afc-muted);
+  transition:
+    color 0.24s ease,
+    transform 0.2s ease;
+}
+
+.afc-nav-icon--active {
+  color: var(--afc-black);
+}
+
+.afc-nav-lock {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--afc-muted);
+  opacity: 0.8;
+}
+
+.afc-nav-soon-badge {
+  padding: 0.125rem 0.375rem !important;
+  font-size: 0.5625rem !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.afc-nav-enter {
+  animation: afc-enter-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (hover: hover) {
+  .afc-nav-item:hover:not(.afc-nav-item--disabled):not(.afc-nav-item--active) {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--afc-white);
+    transform: translateX(3px);
+    box-shadow: inset 2px 0 0 rgba(240, 180, 41, 0.35);
+  }
+
+  .afc-nav-item:hover:not(.afc-nav-item--disabled):not(.afc-nav-item--active) .afc-nav-icon {
+    color: var(--afc-gold);
+    transform: scale(1.06);
+  }
 }
 
 .afc-nav-item--disabled {
-  opacity: 0.45;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  opacity: 0.42;
   cursor: not-allowed;
 }
 
+.afc-nav-item--disabled .afc-nav-icon {
+  transform: scale(0.92);
+  opacity: 0.65;
+}
+
 .afc-nav-item--active {
-  color: var(--afc-white);
-  background: linear-gradient(
-    95deg,
-    rgba(225, 29, 46, 0.35) 0%,
-    rgba(225, 29, 46, 0.08) 100%
-  );
+  color: var(--afc-black);
+  background: linear-gradient(135deg, var(--afc-gold-hot) 0%, var(--afc-gold) 100%);
   box-shadow:
-    inset 4px 0 0 var(--afc-red-hot),
-    0 6px 20px rgba(225, 29, 46, 0.15);
-  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    0 4px 18px var(--afc-gold-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.afc-nav-item--active:hover {
+  color: var(--afc-black);
+  transform: none;
+}
+
+.afc-sidebar-footer {
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.22));
+}
+
+.afc-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+
+.afc-sidebar-user__avatar {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(145deg, var(--afc-panel-2), var(--afc-black));
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--afc-white);
+  box-shadow: inset 0 0 0 2px rgba(240, 180, 41, 0.28);
+}
+
+.afc-sidebar-user__name {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--afc-white);
+}
+
+.afc-sidebar-user__role {
+  margin-top: 0.25rem;
+  font-size: 0.5625rem !important;
+}
+
+.afc-sidebar-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  padding: 0.625rem 0.75rem;
+}
+
+.afc-sidebar-status__dot-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.afc-sidebar-status__dot-wrap .afc-status-pulse {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.afc-sidebar-status__copy {
+  min-width: 0;
+}
+
+.afc-sidebar-status__label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--afc-gold-muted);
+  line-height: 1.3;
+}
+
+.afc-sidebar-status__detail {
+  margin: 0.2rem 0 0;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: var(--afc-muted);
 }
 
 .afc-nav-rail {
-  width: 4px;
-  height: 1.35rem;
-  border-radius: 2px;
-  background: var(--afc-panel-2);
-  transition: background 0.18s ease, box-shadow 0.18s ease;
-  transform: skewY(-8deg);
-}
-
-.afc-nav-item--active .afc-nav-rail {
-  background: linear-gradient(180deg, var(--afc-red-hot), var(--afc-red-dark));
-  box-shadow: 0 0 12px var(--afc-red-glow);
+  display: none;
 }
 
 /* ─── Status pulse ────────────────────────────────────────────────────────── */
@@ -417,13 +797,31 @@ body {
   pointer-events: none;
 }
 
+.afc-status-pulse--gold {
+  background: var(--afc-gold);
+}
+
+.afc-status-pulse--gold::before {
+  background: var(--afc-gold-glow);
+}
+
+.afc-stat-corner-gold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4.5rem;
+  height: 4.5rem;
+  background: linear-gradient(225deg, rgba(240, 180, 41, 0.14), transparent 55%);
+  pointer-events: none;
+}
+
 .afc-stat-corner-green {
   position: absolute;
   top: 0;
   right: 0;
   width: 4.5rem;
   height: 4.5rem;
-  background: linear-gradient(225deg, rgba(34, 197, 94, 0.16), transparent 55%);
+  background: linear-gradient(225deg, rgba(46, 204, 113, 0.16), transparent 55%);
   pointer-events: none;
 }
 
@@ -441,30 +839,32 @@ body {
 
 .afc-client-hero {
   position: relative;
-  border-radius: 1.125rem;
+  border-radius: 0.875rem;
   background: linear-gradient(
-    155deg,
-    rgba(36, 41, 50, 0.85) 0%,
-    rgba(15, 17, 21, 0.95) 100%
+    145deg,
+    rgba(28, 33, 41, 0.95) 0%,
+    rgba(8, 9, 12, 0.98) 100%
   );
-  border: 1px solid rgba(52, 58, 70, 0.9);
+  border: 1px solid var(--afc-border-grey);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 20px 48px rgba(0, 0, 0, 0.42);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
 .afc-client-hero::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
   background: linear-gradient(
-    135deg,
-    rgba(225, 29, 46, 0.12) 0%,
-    transparent 42%,
-    rgba(34, 197, 94, 0.08) 100%
+    180deg,
+    var(--afc-gold-hot),
+    var(--afc-green-neon)
   );
+  z-index: 1;
 }
 
 .afc-chip {
@@ -484,11 +884,12 @@ body {
 }
 
 .afc-section-label {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--afc-muted);
+  color: var(--afc-gold-muted);
 }
 
 /* ─── Sports performance UI ───────────────────────────────────────────────── */
@@ -496,76 +897,165 @@ body {
 .afc-scoreboard {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid var(--afc-border);
+  border-radius: 0.75rem;
+  border: 1px solid var(--afc-border-grey);
   background: linear-gradient(
     135deg,
-    rgba(32, 38, 51, 0.9) 0%,
-    rgba(11, 14, 19, 0.95) 100%
+    rgba(22, 26, 33, 0.98) 0%,
+    rgba(8, 9, 12, 0.99) 100%
   );
   padding: 1.25rem 1.5rem;
+  padding-left: 1.625rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 16px 40px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 .afc-scoreboard::before {
   content: "";
   position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--afc-gold-hot) 70%, var(--afc-gold-muted)),
+    var(--afc-gold-muted),
+    color-mix(in srgb, var(--afc-gold-dark) 80%, var(--afc-gold-muted))
+  );
+}
+
+.afc-scoreboard::after {
+  content: "";
+  position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
+  background: repeating-linear-gradient(
     90deg,
-    rgba(225, 29, 46, 0.12) 0%,
-    transparent 35%,
-    rgba(34, 197, 94, 0.08) 100%
+    transparent,
+    transparent 119px,
+    rgba(255, 255, 255, 0.03) 119px,
+    rgba(255, 255, 255, 0.03) 120px
   );
 }
 
 .afc-stat-tile {
   position: relative;
   overflow: hidden;
-  border-radius: 0.875rem;
-  border: 1px solid var(--afc-border);
+  border-radius: 0.625rem;
+  border: 1px solid var(--afc-border-grey);
   background: linear-gradient(
-    160deg,
-    rgba(32, 38, 51, 0.95) 0%,
-    rgba(17, 24, 39, 0.98) 100%
+    165deg,
+    rgba(28, 33, 41, 0.98) 0%,
+    rgba(14, 16, 20, 0.99) 100%
   );
-  padding: 1.25rem 1.5rem;
+  padding: 1.125rem 1.25rem 1.125rem 1.375rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 12px 32px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 6px 20px rgba(0, 0, 0, 0.4);
   transition:
     transform 0.22s ease,
     border-color 0.22s ease,
     box-shadow 0.22s ease;
 }
 
+.afc-stat-tile::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--afc-gold-muted);
+  opacity: 0.9;
+}
+
 @media (hover: hover) {
   .afc-stat-tile--hover:hover {
-    transform: translateY(-3px);
-    border-color: rgba(255, 255, 255, 0.16);
+    transform: translateY(-2px);
+    border-color: rgba(240, 180, 41, 0.35);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 18px 40px rgba(0, 0, 0, 0.45);
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 12px 28px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(240, 180, 41, 0.08);
+  }
+
+  .afc-stat-tile--hover:hover .afc-stat-tile__icon {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  .afc-stat-tile--hover:hover .afc-stat-tile__icon--neutral {
+    color: var(--afc-gold-muted);
   }
 }
 
 .afc-stat-tile__label {
-  font-size: 0.625rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--afc-muted);
 }
 
+.afc-stat-tile__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-stat-tile__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--afc-muted);
+  opacity: 0.72;
+  transition:
+    color 0.22s ease,
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.afc-stat-tile__icon--success {
+  color: var(--afc-green-neon);
+  opacity: 0.85;
+}
+
+.afc-stat-tile__icon--danger {
+  color: var(--afc-red-hot);
+  opacity: 0.88;
+}
+
+.afc-stat-tile__icon--accent {
+  color: var(--afc-gold-muted);
+  opacity: 0.9;
+}
+
+@media (max-width: 480px) {
+  .afc-stat-tile__icon {
+    width: 0.8125rem;
+    height: 0.8125rem;
+  }
+
+  .afc-stat-tile__header {
+    gap: 0.375rem;
+  }
+
+  .afc-stat-tile__label {
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+  }
+}
+
 .afc-stat-tile__value {
-  margin-top: 0.5rem;
-  font-size: 2rem;
-  font-weight: 900;
+  margin-top: 0.375rem;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -592,7 +1082,7 @@ body {
 }
 
 .afc-meter__fill--accent {
-  background: linear-gradient(90deg, var(--afc-red), var(--afc-panel-2));
+  background: linear-gradient(90deg, var(--afc-gold-dark), var(--afc-gold-hot));
 }
 
 .afc-meter__fill--neutral {
@@ -629,9 +1119,9 @@ body {
 .afc-player-card__edge--tl {
   top: 0;
   left: 0;
-  background: linear-gradient(135deg, var(--afc-red-hot), transparent 60%);
+  background: linear-gradient(135deg, var(--afc-gold-hot), transparent 60%);
   clip-path: polygon(0 0, 100% 0, 0 100%);
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .afc-player-card__edge--br {
@@ -639,7 +1129,7 @@ body {
   right: 0;
   background: linear-gradient(315deg, var(--afc-green-neon), transparent 60%);
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
-  opacity: 0.35;
+  opacity: 0.3;
 }
 
 .afc-player-avatar {
@@ -665,7 +1155,108 @@ body {
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  border: 2px solid rgba(225, 29, 46, 0.45);
+  border: 2px solid rgba(240, 180, 41, 0.4);
+  pointer-events: none;
+}
+
+/* Shared avatar — status ring + gradient fill */
+.afc-avatar {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  overflow: visible;
+}
+
+.afc-avatar--roster {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+}
+
+.afc-avatar--card {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.afc-avatar--preview {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1rem;
+  font-size: 1.25rem;
+  margin: 0 auto 1rem;
+}
+
+.afc-avatar--hero {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1rem;
+  font-size: 1.75rem;
+}
+
+.afc-avatar__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, transparent 42%),
+    linear-gradient(155deg, var(--afc-panel-2) 0%, var(--afc-black) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.afc-avatar__initial {
+  position: relative;
+  z-index: 1;
+  font-weight: 800;
+  color: var(--afc-white);
+}
+
+.afc-avatar__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  transition: border-color 0.25s ease, opacity 0.25s ease;
+}
+
+.afc-avatar--active .afc-avatar__ring {
+  border-color: rgba(240, 180, 41, 0.55);
+  box-shadow: 0 0 12px rgba(240, 180, 41, 0.12);
+}
+
+.afc-avatar--frozen .afc-avatar__ring {
+  border-color: rgba(148, 163, 184, 0.35);
+  opacity: 0.85;
+}
+
+.afc-avatar--frozen .afc-avatar__fill {
+  filter: saturate(0.45);
+}
+
+.afc-avatar--inactive .afc-avatar__ring {
+  border-color: rgba(100, 116, 139, 0.3);
+  opacity: 0.75;
+}
+
+.afc-avatar--inactive .afc-avatar__fill {
+  filter: saturate(0.6);
+}
+
+.afc-avatar--pending .afc-avatar__ring {
+  border-color: rgba(240, 180, 41, 0.5);
+}
+
+.afc-avatar__pulse {
+  position: absolute;
+  inset: -6px;
+  z-index: 0;
+  border-radius: inherit;
   pointer-events: none;
 }
 
@@ -701,17 +1292,33 @@ body {
 }
 
 .afc-roster-row {
-  transition: background 0.15s ease;
+  transition:
+    background 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
-.afc-roster-row:hover {
-  background: rgba(225, 29, 46, 0.04);
+.afc-roster-row--hover:hover {
+  background: rgba(240, 180, 41, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(240, 180, 41, 0.14);
+}
+
+.afc-roster-action-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.afc-action-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .afc-roster-board {
   max-width: 100%;
   overflow: hidden;
-  border-radius: 1.125rem;
+  border-radius: 0.75rem;
 }
 
 .afc-roster-scroll-hint {
@@ -730,7 +1337,7 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-color: rgba(225, 29, 46, 0.45) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(240, 180, 41, 0.45) rgba(255, 255, 255, 0.06);
   scrollbar-width: thin;
 }
 
@@ -744,7 +1351,7 @@ body {
 }
 
 .afc-roster-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, var(--afc-red-dark), var(--afc-red-hot));
+  background: linear-gradient(90deg, var(--afc-gold-dark), var(--afc-gold-hot));
   border-radius: 999px;
 }
 
@@ -807,18 +1414,39 @@ body {
 .afc-squad-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid var(--afc-border);
+  border-radius: 0.625rem;
+  border: 1px solid var(--afc-border-grey);
   background: linear-gradient(
-    160deg,
-    rgba(32, 38, 51, 0.95) 0%,
-    rgba(11, 14, 19, 0.98) 100%
+    165deg,
+    rgba(28, 33, 41, 0.98) 0%,
+    rgba(8, 9, 12, 0.99) 100%
   );
   padding: 1.25rem;
+  padding-left: 1.375rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 12px 32px rgba(0, 0, 0, 0.35);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.afc-squad-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--afc-gold-muted);
+  opacity: 0.85;
+}
+
+.afc-squad-card--frozen::before {
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    var(--afc-amber),
+    color-mix(in srgb, var(--afc-amber) 70%, var(--afc-red))
+  );
+  opacity: 0.95;
 }
 
 .afc-squad-card__avatar {
@@ -884,6 +1512,38 @@ body {
   color: var(--afc-white);
 }
 
+.afc-roster-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.afc-roster-cell__line {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--afc-light-grey);
+}
+
+.afc-roster-cell__line--strong {
+  font-weight: 700;
+  color: var(--afc-white);
+}
+
+.afc-roster-cell__meta {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--afc-muted);
+}
+
+.afc-squad-card__stats dd .afc-roster-cell {
+  align-items: flex-end;
+  text-align: right;
+}
+
 .afc-field-input {
   min-height: 44px;
   width: 100%;
@@ -904,10 +1564,10 @@ body {
 }
 
 .afc-field-input:focus {
-  border-color: var(--afc-red);
+  border-color: var(--afc-gold);
   background: var(--afc-charcoal);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.25);
+  box-shadow: 0 0 0 2px var(--afc-gold-glow);
 }
 
 .afc-clients-page {
@@ -941,11 +1601,11 @@ body {
 }
 
 .afc-topbar-scoreboard {
-  border-bottom: 1px solid var(--afc-border);
+  border-bottom: 1px solid var(--afc-border-grey);
   background: linear-gradient(
     180deg,
-    rgba(17, 24, 39, 0.95) 0%,
-    rgba(11, 14, 19, 0.88) 100%
+    rgba(18, 21, 26, 0.98) 0%,
+    rgba(8, 9, 12, 0.92) 100%
   );
 }
 
@@ -954,9 +1614,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--font-display);
   font-size: 0.9375rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--afc-white);
 }
@@ -999,6 +1660,39 @@ body {
 .afc-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.35);
   border-radius: 999px;
+}
+
+.afc-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 142, 100, 0.42) rgba(0, 0, 0, 0.28);
+}
+
+.afc-modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 142, 100, 0.42);
+  border-radius: 999px;
+}
+
+.afc-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.5);
+}
+
+.afc-input-readonly {
+  background: rgba(0, 0, 0, 0.35) !important;
+  color: var(--afc-muted) !important;
+}
+
+.afc-input-readonly:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 /* ─── Status confirmation modal ───────────────────────────────────────────── */
@@ -1103,7 +1797,464 @@ body {
   gap: 0.75rem;
 }
 
+/* ─── Add measurement modal ─────────────────────────────────────────────────── */
+
+.afc-measurement-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(225, 29, 46, 0.12), transparent 55%),
+    rgba(5, 5, 5, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.afc-measurement-modal__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 42rem);
+  max-height: min(92vh, 860px);
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    165deg,
+    rgba(23, 28, 36, 0.98) 0%,
+    rgba(11, 14, 19, 0.99) 100%
+  );
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.afc-measurement-modal__accent {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--afc-gold-dark) 0%,
+    var(--afc-gold-hot) 50%,
+    var(--afc-gold-dark) 100%
+  );
+}
+
+.afc-measurement-modal__header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-modal__kicker {
+  margin: 0;
+  color: var(--afc-gold);
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-modal__title {
+  margin: 0;
+  color: var(--afc-white);
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.afc-measurement-modal__subtitle {
+  margin: 0;
+  color: var(--afc-silver);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.afc-measurement-modal__client {
+  margin: 0.25rem 0 0;
+  color: var(--afc-muted);
+  font-size: 0.875rem;
+}
+
+.afc-measurement-modal__error {
+  flex-shrink: 0;
+  margin: 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(225, 29, 46, 0.35);
+  background: rgba(225, 29, 46, 0.1);
+  color: #fecaca;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.afc-measurement-modal__form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.afc-measurement-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.afc-measurement-form {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.afc-measurement-section {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.afc-measurement-section__title,
+.afc-measurement-section__toggle {
+  margin: 0 0 1rem;
+  color: var(--afc-white);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-section__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-measurement-section__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--afc-gold-muted);
+  opacity: 0.85;
+}
+
+.afc-measurement-section__chevron {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--afc-muted);
+  transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.afc-measurement-section__toggle[aria-expanded="true"] .afc-measurement-section__chevron {
+  color: var(--afc-gold-muted);
+}
+
+.afc-measurement-section__collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.afc-measurement-section__collapse--open {
+  grid-template-rows: 1fr;
+}
+
+.afc-measurement-section__collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.afc-input-with-unit {
+  position: relative;
+}
+
+.afc-input-with-unit__field {
+  padding-right: 3rem !important;
+}
+
+.afc-input-with-unit__suffix {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--afc-muted);
+  pointer-events: none;
+}
+
+.afc-measurement-section__toggle {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.afc-measurement-section__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .afc-measurement-section__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.afc-measurement-textarea {
+  min-height: 6.5rem;
+  width: 100%;
+  resize: vertical;
+  border-radius: 0.75rem;
+  border: 1px solid var(--afc-border-grey);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.875rem 1rem;
+  color: var(--afc-white);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.afc-measurement-textarea:focus {
+  border-color: var(--afc-gold);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--afc-gold-glow);
+}
+
+.afc-measurement-textarea--error {
+  border-color: var(--afc-red);
+}
+
+.afc-measurement-modal__actions {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    180deg,
+    rgba(11, 14, 19, 0.92) 0%,
+    rgba(11, 14, 19, 0.98) 100%
+  );
+}
+
+.afc-measurement-modal__actions button {
+  min-height: 44px;
+  min-width: 7.5rem;
+}
+
+@media (max-width: 480px) {
+  .afc-measurement-modal {
+    align-items: flex-end;
+    padding: max(0.5rem, env(safe-area-inset-top))
+      max(0.5rem, env(safe-area-inset-right))
+      max(0.5rem, env(safe-area-inset-bottom))
+      max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .afc-measurement-modal__panel {
+    width: 100%;
+    max-height: min(92dvh, 860px);
+    border-radius: 1rem 1rem 0.75rem 0.75rem;
+  }
+
+  .afc-measurement-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .afc-measurement-modal__actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.afc-measurement-history {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-history__title {
+  margin: 0 0 1rem;
+  color: var(--afc-soft-grey);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history__list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.afc-measurement-history-item {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 1rem;
+}
+
+.afc-measurement-history-item--latest {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.afc-measurement-history-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.afc-measurement-history-item__date {
+  margin: 0;
+  color: var(--afc-white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.afc-measurement-history-item__badge {
+  display: inline-flex;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  padding: 0.15rem 0.5rem;
+  color: var(--afc-green-neon);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history-item__weight {
+  margin: 0;
+  color: var(--afc-green-neon);
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.afc-measurement-history-item__metrics {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+}
+
+.afc-measurement-history-item__notes {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-measurement-history-item__label {
+  margin: 0;
+  color: var(--afc-soft-grey);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.afc-measurement-history-item__copy {
+  margin: 0.35rem 0 0;
+  color: var(--afc-light-grey);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
 /* ─── Athlete onboarding ──────────────────────────────────────────────────── */
+
+.afc-onboarding-stepper-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.afc-onboarding-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.afc-onboarding-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--afc-gold-dark), var(--afc-gold-hot));
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.afc-preview-reveal {
+  animation: afc-preview-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes afc-preview-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.afc-onboarding-stepper__marker--pop {
+  animation: afc-step-complete-pop 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes afc-step-complete-pop {
+  0% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+  45% {
+    transform: scale(1.14);
+    box-shadow: 0 0 14px var(--afc-gold-glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
 
 .afc-onboarding-stepper {
   overflow-x: auto;
@@ -1133,14 +2284,14 @@ body {
 }
 
 .afc-onboarding-stepper__item--current {
-  border-color: rgba(225, 29, 46, 0.45);
-  background: rgba(225, 29, 46, 0.1);
-  box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.12) inset;
+  border-color: rgba(240, 180, 41, 0.45);
+  background: rgba(240, 180, 41, 0.08);
+  box-shadow: inset 3px 0 0 var(--afc-gold);
 }
 
 .afc-onboarding-stepper__item--complete {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(46, 204, 113, 0.35);
+  background: rgba(46, 204, 113, 0.06);
 }
 
 .afc-onboarding-stepper__marker {
@@ -1148,15 +2299,17 @@ body {
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: 999px;
+  border-radius: 0.25rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.35);
   flex-shrink: 0;
+  font-family: var(--font-display);
 }
 
 .afc-onboarding-stepper__item--current .afc-onboarding-stepper__marker {
-  border-color: rgba(225, 29, 46, 0.55);
-  color: var(--afc-red-hot);
+  border-color: rgba(240, 180, 41, 0.55);
+  color: var(--afc-gold-hot);
+  background: rgba(240, 180, 41, 0.12);
 }
 
 .afc-onboarding-stepper__item--complete .afc-onboarding-stepper__marker {
@@ -1224,12 +2377,13 @@ body {
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(225, 29, 46, 0.35);
-  background: rgba(225, 29, 46, 0.12);
-  color: var(--afc-red-hot);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(240, 180, 41, 0.35);
+  background: rgba(240, 180, 41, 0.1);
+  color: var(--afc-gold-hot);
+  font-family: var(--font-display);
   font-size: 0.875rem;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -1269,7 +2423,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--afc-red-hot);
+  color: var(--afc-gold-muted);
 }
 
 .afc-onboarding-preview__avatar {
@@ -1477,12 +2631,12 @@ body {
 }
 
 .afc-plan-card:hover {
-  border-color: rgba(220, 38, 38, 0.45);
-  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(240, 180, 41, 0.45);
+  background: rgba(240, 180, 41, 0.06);
 }
 
 .afc-plan-card:focus-visible {
-  outline: 2px solid var(--afc-red);
+  outline: 2px solid var(--afc-gold);
   outline-offset: 2px;
 }
 
@@ -1686,7 +2840,7 @@ body {
 
 .afc-select-field__required {
   margin-left: 0.25rem;
-  color: var(--afc-red-hot);
+  color: var(--afc-gold-muted);
 }
 
 .afc-select-field__control {
@@ -1694,21 +2848,11 @@ body {
 }
 
 .afc-select-field__control--native {
-  display: block;
-}
-
-.afc-select-field__control--custom {
   display: none;
 }
 
-@media (min-width: 1024px) {
-  .afc-select-field__control--native {
-    display: none;
-  }
-
-  .afc-select-field__control--custom {
-    display: block;
-  }
+.afc-select-field__control--custom {
+  display: block;
 }
 
 .afc-select-field--open {
@@ -1740,10 +2884,10 @@ body {
 }
 
 .afc-select-native:focus {
-  border-color: var(--afc-red);
+  border-color: var(--afc-gold);
   background-color: var(--afc-charcoal);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.25);
+  box-shadow: 0 0 0 2px var(--afc-gold-glow);
 }
 
 .afc-select-native:disabled {
@@ -1793,19 +2937,19 @@ body {
 }
 
 .afc-select-trigger:focus-visible {
-  border-color: var(--afc-red);
+  border-color: var(--afc-gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.28);
+  box-shadow: 0 0 0 2px var(--afc-gold-glow);
 }
 
 .afc-select-trigger--open {
-  border-color: rgba(225, 29, 46, 0.45);
-  box-shadow: 0 0 0 1px rgba(225, 29, 46, 0.18) inset;
+  border-color: rgba(240, 180, 41, 0.45);
+  box-shadow: 0 0 0 1px rgba(240, 180, 41, 0.15) inset;
 }
 
 .afc-select-trigger--open .afc-select-trigger__arrow {
   transform: translateY(-35%) rotate(225deg);
-  border-color: var(--afc-red-hot);
+  border-color: var(--afc-gold-hot);
 }
 
 .afc-select-trigger:disabled {
@@ -1850,6 +2994,28 @@ body {
   overscroll-behavior: contain;
 }
 
+.afc-select-menu--portal {
+  top: auto;
+  right: auto;
+  animation: afc-select-menu-in 180ms ease;
+}
+
+.afc-select-menu--portal.afc-select-menu--above {
+  transform-origin: bottom center;
+  animation: afc-select-menu-in-above 180ms ease;
+}
+
+@keyframes afc-select-menu-in-above {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes afc-select-menu-in {
   from {
     opacity: 0;
@@ -1889,16 +3055,16 @@ body {
 
 .afc-select-option:hover,
 .afc-select-option--highlighted {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(240, 180, 41, 0.08);
 }
 
 .afc-select-option--selected {
-  background: rgba(34, 197, 94, 0.12);
-  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.22) inset;
+  background: rgba(240, 180, 41, 0.12);
+  box-shadow: 0 0 0 1px rgba(240, 180, 41, 0.28) inset;
 }
 
 .afc-select-option--selected .afc-select-option__label {
-  color: var(--afc-green-neon);
+  color: var(--afc-gold-hot);
 }
 
 .afc-select-field--error .afc-select-native,
@@ -1908,7 +3074,8 @@ body {
 
 .afc-select-field--error .afc-select-native:focus,
 .afc-select-field--error .afc-select-trigger:focus-visible {
-  box-shadow: 0 0 0 2px rgba(225, 29, 46, 0.3);
+  border-color: var(--afc-red);
+  box-shadow: 0 0 0 2px var(--afc-red-glow);
 }
 
 .afc-select-field__hint {
@@ -1933,5 +3100,1733 @@ body {
 
   .afc-select-menu {
     animation: none;
+  }
+}
+
+/* ─── Iron Lanes v2: hero band, page header, data panel, motion ─────────── */
+
+@keyframes afc-enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes afc-row-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes afc-pulse-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(2);
+  }
+}
+
+@keyframes afc-meter-grow {
+  from {
+    width: 0;
+  }
+}
+
+.afc-animate-enter {
+  animation: afc-enter-rise 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.afc-animate-row {
+  animation: afc-row-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.afc-page-stack {
+  min-width: 0;
+}
+
+.afc-stat-grid {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .afc-stat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .afc-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .afc-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 72rem;
+  }
+}
+
+.afc-stat-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+
+@media (min-width: 1280px) {
+  .afc-stat-grid--compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 56rem;
+  }
+}
+
+/* Owner dashboard — ambient depth (well below login; must not compete with stats) */
+.afc-dashboard-page {
+  isolation: isolate;
+}
+
+.afc-dashboard-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  color: color-mix(in srgb, var(--afc-muted) 58%, var(--afc-gold-muted));
+}
+
+.afc-dashboard-ambient__lanes {
+  position: absolute;
+  inset: -18%;
+  opacity: 0.042;
+  background:
+    repeating-linear-gradient(
+      -16deg,
+      transparent,
+      transparent 52px,
+      currentColor 52px,
+      currentColor 53px
+    ),
+    repeating-linear-gradient(
+      74deg,
+      transparent,
+      transparent 104px,
+      rgba(240, 180, 41, 0.035) 104px,
+      rgba(240, 180, 41, 0.035) 105px
+    );
+  animation: afc-dashboard-lanes-drift 32s ease-in-out infinite;
+}
+
+.afc-dashboard-ambient__barbell {
+  position: absolute;
+  right: -3%;
+  bottom: 5%;
+  width: min(36vw, 17rem);
+  opacity: 0.05;
+  color: color-mix(in srgb, var(--afc-gold-muted) 38%, var(--afc-muted));
+  transform-origin: center center;
+  animation: afc-dashboard-barbell-sway 18s ease-in-out infinite;
+}
+
+@keyframes afc-dashboard-lanes-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-1.25%, 0.6%);
+  }
+}
+
+@keyframes afc-dashboard-barbell-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-5px);
+  }
+}
+
+/* Squad / client detail — ambient depth (data-heavy; corners only) */
+.afc-squad-page {
+  isolation: isolate;
+}
+
+.afc-squad-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  color: color-mix(in srgb, var(--afc-muted) 55%, var(--afc-gold-muted));
+}
+
+.afc-squad-ambient__lanes {
+  position: absolute;
+  inset: -16%;
+  opacity: 0.04;
+  background:
+    repeating-linear-gradient(
+      -14deg,
+      transparent,
+      transparent 56px,
+      currentColor 56px,
+      currentColor 57px
+    );
+  animation: afc-squad-lanes-drift 28s ease-in-out infinite;
+}
+
+.afc-squad-ambient__barbell {
+  position: absolute;
+  right: -2%;
+  bottom: 4%;
+  width: min(32vw, 15rem);
+  opacity: 0.05;
+  color: color-mix(in srgb, var(--afc-gold-muted) 42%, var(--afc-muted));
+  transform-origin: center center;
+  animation: afc-squad-barbell-sway 24s ease-in-out infinite;
+}
+
+.afc-squad-ambient__kettlebell {
+  position: absolute;
+  left: -1%;
+  top: 8%;
+  width: min(14vw, 4.5rem);
+  opacity: 0.045;
+  transform-origin: 50% 80%;
+  animation: afc-squad-kettlebell-sway 26s ease-in-out infinite;
+}
+
+.afc-squad-ambient__band {
+  position: absolute;
+  right: 2%;
+  top: 14%;
+  width: min(22vw, 7rem);
+  opacity: 0.04;
+  animation: afc-squad-band-drift 22s ease-in-out infinite;
+}
+
+.afc-squad-ambient__droplet {
+  position: absolute;
+  left: 1%;
+  bottom: 18%;
+  width: min(10vw, 2.75rem);
+  opacity: 0.045;
+  animation: afc-squad-droplet-float 30s ease-in-out infinite;
+}
+
+.afc-squad-ambient__leaf {
+  position: absolute;
+  right: 8%;
+  bottom: 22%;
+  width: min(12vw, 3.25rem);
+  opacity: 0.04;
+  animation: afc-squad-leaf-sway 32s ease-in-out infinite;
+}
+
+.afc-squad-ambient__bottle {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  width: min(9vw, 2.5rem);
+  opacity: 0.04;
+  animation: afc-squad-bottle-sway 20s ease-in-out infinite;
+}
+
+.afc-squad-ambient__macro-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: min(18vw, 5.5rem);
+  margin-left: min(-9vw, -2.75rem);
+  opacity: 0.035;
+  transform-origin: center center;
+  animation: afc-squad-ring-rotate 38s linear infinite;
+}
+
+/* Roster: emphasize equipment; hide nutrition motifs in center field */
+.afc-squad-ambient--roster .afc-squad-ambient__droplet,
+.afc-squad-ambient--roster .afc-squad-ambient__leaf,
+.afc-squad-ambient--roster .afc-squad-ambient__bottle,
+.afc-squad-ambient--roster .afc-squad-ambient__macro-ring {
+  display: none;
+}
+
+/* Detail: show nutrition motifs; tuck equipment further to edges */
+.afc-squad-ambient--detail .afc-squad-ambient__barbell {
+  right: -4%;
+  bottom: 2%;
+  opacity: 0.042;
+}
+
+.afc-squad-ambient--detail .afc-squad-ambient__kettlebell {
+  top: 4%;
+  opacity: 0.04;
+}
+
+@keyframes afc-squad-lanes-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-0.8%, 0.5%);
+  }
+}
+
+@keyframes afc-squad-barbell-sway {
+  0%,
+  100% {
+    transform: rotate(-1deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(1deg) translate(0, -8px);
+  }
+}
+
+@keyframes afc-squad-kettlebell-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(2deg) translate(6px, -6px);
+  }
+}
+
+@keyframes afc-squad-band-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-8px, 6px) scale(1.02);
+  }
+}
+
+@keyframes afc-squad-droplet-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes afc-squad-leaf-sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes afc-squad-bottle-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1.5deg);
+  }
+}
+
+@keyframes afc-squad-ring-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.afc-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-section-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  color: var(--afc-gold-muted);
+  opacity: 0.82;
+}
+
+.afc-macro-ring {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.afc-macro-ring svg {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+}
+
+.afc-macro-ring__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--afc-muted);
+}
+
+.afc-macro-ring__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.afc-macro-ring__dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.afc-plan-card__title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.afc-plan-session-icon {
+  width: 1.75rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--afc-gold-muted);
+  opacity: 0.9;
+}
+
+@media (max-width: 480px) {
+  .afc-section-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .afc-macro-ring {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .afc-macro-ring svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* Hero band — horizontal context strip (no KPI numbers, no chamfer) */
+.afc-hero-band {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--afc-border-grey);
+  border-left: none;
+  border-radius: 0;
+  clip-path: none;
+  background:
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 18px,
+      rgba(255, 255, 255, 0.018) 18px,
+      rgba(255, 255, 255, 0.018) 19px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(240, 180, 41, 0.05) 0%,
+      transparent 28%,
+      transparent 100%
+    ),
+    linear-gradient(180deg, rgba(18, 20, 26, 0.98) 0%, rgba(8, 9, 12, 0.99) 100%);
+  box-shadow:
+    inset 0 -2px 0 rgba(240, 180, 41, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.afc-hero-band__lane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(
+    180deg,
+    var(--afc-gold-hot),
+    var(--afc-gold),
+    var(--afc-gold-dark)
+  );
+}
+
+.afc-hero-band__inner {
+  position: relative;
+  z-index: 1;
+  padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+}
+
+.afc-hero-band__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.afc-hero-band__kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-hero-band__kicker-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--afc-gold-muted);
+}
+
+.afc-hero-band__kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--afc-gold);
+}
+
+.afc-hero-band__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.afc-hero-band__metrics {
+  display: none;
+}
+
+.afc-hero-band__copy {
+  max-width: 42rem;
+}
+
+.afc-hero-band__headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: var(--afc-white);
+}
+
+.afc-hero-band__detail {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--afc-muted);
+}
+
+.afc-hero-band__footer {
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.afc-hero-band__api-chip {
+  display: inline-flex;
+  border-radius: 0.375rem;
+  border: 1px solid var(--afc-border-grey);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.35rem 0.625rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--afc-green-neon);
+}
+
+/* Compact page header — detail/sub-pages */
+.afc-page-header {
+  position: relative;
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.75rem 0 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--afc-border-grey);
+}
+
+.afc-page-header__rail {
+  width: 2px;
+  flex-shrink: 0;
+  background: var(--afc-gold-muted);
+  border-radius: 1px;
+}
+
+.afc-page-header__kicker {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--afc-gold-muted);
+}
+
+.afc-page-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-page-header__title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--afc-white);
+}
+
+.afc-page-header__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--afc-muted);
+}
+
+/* Data panel — ruled workbench surface (flat grid, no chamfer) */
+.afc-data-panel {
+  border: 1px solid var(--afc-border-grey);
+  border-radius: 0;
+  overflow: hidden;
+  background-color: rgba(6, 7, 10, 0.96);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 20px 20px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.afc-data-panel__body {
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--afc-border-grey);
+  background: rgba(0, 0, 0, 0.28);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Stat tile — chamfered scoreboard cell */
+.afc-stat-tile {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  border-radius: 0;
+}
+
+.afc-stat-tile__chamfer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, transparent 50%, rgba(240, 180, 41, 0.12) 50%);
+  pointer-events: none;
+}
+
+.afc-stat-tile__hint {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--afc-muted);
+}
+
+.afc-stat-tile--skeleton {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.afc-stat-tile__skeleton-label {
+  margin-bottom: 0.75rem;
+  height: 0.5rem;
+  width: 4rem;
+  border-radius: 0.25rem;
+  background: var(--afc-panel-2);
+}
+
+.afc-stat-tile__skeleton-value {
+  height: 2rem;
+  width: 5rem;
+  border-radius: 0.25rem;
+  background: var(--afc-panel-2);
+}
+
+.afc-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(240, 180, 41, 0.45);
+  background: rgba(240, 180, 41, 0.12);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--afc-gold);
+}
+
+.afc-status-pulse::before {
+  animation: afc-pulse-breathe 1.6s ease-in-out infinite;
+}
+
+.afc-meter__fill--animate {
+  animation: afc-meter-grow 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (hover: hover) {
+  .afc-stat-tile--hover:hover {
+    transform: translateY(-3px);
+    border-color: rgba(240, 180, 41, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 14px 32px rgba(0, 0, 0, 0.5),
+      0 0 20px var(--afc-gold-muted-glow);
+  }
+
+  .afc-roster-row--hover:hover {
+    background: rgba(240, 180, 41, 0.06);
+    box-shadow: inset 3px 0 0 var(--afc-gold-muted);
+  }
+
+  .afc-squad-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afc-onboarding-progress__fill,
+  .afc-preview-reveal,
+  .afc-onboarding-stepper__marker--pop,
+  .afc-measurement-section__collapse {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .afc-measurement-section__collapse--open {
+    grid-template-rows: 1fr;
+  }
+
+  .afc-animate-enter,
+  .afc-animate-row,
+  .afc-nav-enter,
+  .afc-meter__fill--animate,
+  .afc-status-pulse::before,
+  .afc-login-lanes--animate,
+  .afc-login-logo__pin,
+  .afc-gym-art,
+  .afc-gym-art__stopwatch-hand,
+  .afc-gym-art__heartrate-path,
+  .afc-dashboard-ambient__lanes,
+  .afc-dashboard-ambient__barbell,
+  .afc-squad-ambient__lanes,
+  .afc-squad-ambient__barbell,
+  .afc-squad-ambient__kettlebell,
+  .afc-squad-ambient__band,
+  .afc-squad-ambient__droplet,
+  .afc-squad-ambient__leaf,
+  .afc-squad-ambient__bottle,
+  .afc-squad-ambient__macro-ring,
+  .afc-login-headline-reveal,
+  .afc-login-kicker-word {
+    animation: none !important;
+  }
+
+  .afc-stat-tile--hover:hover,
+  .afc-squad-card:hover,
+  .afc-login-submit:hover,
+  .afc-login-submit:active,
+  .afc-nav-item:hover {
+    transform: none;
+  }
+}
+
+/* ─── Login page — Iron Lanes signature entrance ─────────────────────────── */
+
+.afc-login-page.afc-gradient-bg {
+  background:
+    radial-gradient(ellipse 70% 60% at 18% 0%, rgba(240, 180, 41, 0.11), transparent 55%),
+    radial-gradient(ellipse 45% 40% at 92% 100%, rgba(34, 197, 94, 0.07), transparent 50%),
+    linear-gradient(165deg, var(--afc-black) 0%, var(--afc-stadium-dark) 55%, var(--afc-charcoal) 100%);
+}
+
+.afc-login-page.afc-gradient-bg::before {
+  opacity: 0.2;
+}
+
+.afc-login-hero {
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  overflow: hidden;
+  padding: 3rem 2.5rem;
+}
+
+@media (min-width: 1280px) {
+  .afc-login-hero {
+    padding: 4rem 5rem;
+  }
+}
+
+.afc-login-hero__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  max-width: 36rem;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min(100%, 100dvh);
+  padding: 2rem 0 3rem;
+}
+
+.afc-login-gym {
+  --parallax-x: 0;
+  --parallax-y: 0;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--afc-gold-muted) 62%, var(--afc-muted));
+}
+
+.afc-login-gym--hero {
+  opacity: 0.28;
+}
+
+.afc-login-gym--mobile {
+  opacity: 0.14;
+  color: color-mix(in srgb, var(--afc-gold-muted) 45%, var(--afc-muted));
+}
+
+.afc-login-gym--mobile .afc-gym-art--barbell {
+  left: -18%;
+  bottom: 8%;
+  width: 14rem;
+}
+
+.afc-login-gym--mobile .afc-gym-art--kettlebell {
+  right: -4%;
+  bottom: 4%;
+  width: 4.5rem;
+}
+
+.afc-login-gym--mobile .afc-gym-art--stopwatch {
+  display: none;
+}
+
+.afc-login-gym--mobile .afc-gym-art--heartrate {
+  left: -6%;
+  bottom: 0;
+  width: 16rem;
+}
+
+.afc-gym-art {
+  position: absolute;
+  overflow: visible;
+}
+
+.afc-gym-art--barbell {
+  left: -2%;
+  bottom: 10%;
+  width: min(46vw, 26rem);
+  transform-origin: center center;
+  animation: afc-gym-barbell-sway 11s ease-in-out infinite;
+}
+
+.afc-gym-art--kettlebell {
+  right: 6%;
+  bottom: 6%;
+  width: min(20vw, 8.5rem);
+  transform-origin: 50% 12%;
+  animation: afc-gym-kettlebell-swing 8s ease-in-out infinite;
+}
+
+.afc-gym-art--stopwatch {
+  right: 28%;
+  bottom: 22%;
+  width: min(16vw, 7rem);
+  animation: afc-gym-stopwatch-float 14s ease-in-out infinite;
+}
+
+.afc-gym-art__stopwatch-hand {
+  transform-origin: 70px 96px;
+  animation: afc-gym-stopwatch-sweep 10s linear infinite;
+}
+
+.afc-gym-art--heartrate {
+  left: 8%;
+  bottom: 2%;
+  width: min(52vw, 28rem);
+}
+
+.afc-gym-art__heartrate-path {
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  animation: afc-gym-heartrate-draw 5s linear infinite;
+}
+
+@keyframes afc-gym-barbell-sway {
+  0%,
+  100% {
+    transform: translate(
+        calc(var(--parallax-x) * 18px),
+        calc(var(--parallax-y) * 10px)
+      )
+      rotate(-4deg);
+  }
+  50% {
+    transform: translate(
+        calc(var(--parallax-x) * 18px),
+        calc(var(--parallax-y) * 10px)
+      )
+      rotate(4deg);
+  }
+}
+
+@keyframes afc-gym-kettlebell-swing {
+  0%,
+  100% {
+    transform: translate(
+        calc(var(--parallax-x) * -14px),
+        calc(var(--parallax-y) * 12px)
+      )
+      rotate(-10deg);
+  }
+  50% {
+    transform: translate(
+        calc(var(--parallax-x) * -14px),
+        calc(var(--parallax-y) * 12px)
+      )
+      rotate(10deg);
+  }
+}
+
+@keyframes afc-gym-stopwatch-float {
+  0%,
+  100% {
+    transform: translate(
+      calc(var(--parallax-x) * 10px),
+      calc(var(--parallax-y) * 8px)
+    );
+  }
+  50% {
+    transform: translate(
+        calc(var(--parallax-x) * 10px),
+        calc(var(--parallax-y) * 8px - 6px)
+      );
+  }
+}
+
+@keyframes afc-gym-stopwatch-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes afc-gym-heartrate-draw {
+  0% {
+    stroke-dashoffset: 420;
+    opacity: 0.45;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -80;
+    opacity: 0.45;
+  }
+}
+
+@keyframes afc-login-headline-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.4;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+.afc-login-headline-reveal {
+  animation: afc-login-headline-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.afc-login-kicker-reveal {
+  margin: 0;
+}
+
+.afc-login-kicker-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.55rem);
+  animation: afc-login-kicker-word 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes afc-login-kicker-word {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.afc-login-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(64px);
+}
+
+.afc-login-glow--gold {
+  top: -6rem;
+  left: -8rem;
+  width: 20rem;
+  height: 20rem;
+  background: rgba(240, 180, 41, 0.14);
+}
+
+.afc-login-glow--green {
+  right: -6rem;
+  bottom: -4rem;
+  width: 18rem;
+  height: 18rem;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.afc-login-logo__plate {
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 78% 100%, 0 100%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.afc-login-logo__pin {
+  animation: afc-pulse-breathe 2s ease-in-out infinite;
+}
+
+.afc-login-hero__lane {
+  border-left: 3px solid var(--afc-gold-muted);
+  padding-left: 1rem;
+}
+
+.afc-login-hero__lane-kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--afc-gold-muted);
+}
+
+.afc-login-hero__lane-copy {
+  margin: 0.5rem 0 0;
+  max-width: 28rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--afc-silver);
+}
+
+.afc-login-form-col {
+  min-width: 0;
+}
+
+.afc-login-submit {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+@media (hover: hover) {
+  .afc-login-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 36px var(--afc-gold-glow),
+      0 0 0 1px rgba(240, 180, 41, 0.35);
+  }
+
+  .afc-login-submit:active:not(:disabled) {
+    transform: translateY(1px) scale(0.992);
+    box-shadow: 0 4px 16px var(--afc-gold-glow);
+  }
+}
+
+.afc-login-dev {
+  border: 1px dashed rgba(148, 156, 168, 0.35);
+  border-radius: 0.75rem;
+  background: rgba(8, 9, 12, 0.55);
+  color: var(--afc-muted);
+}
+
+.afc-login-dev__summary {
+  display: flex;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--afc-soft-grey);
+  user-select: none;
+}
+
+.afc-login-dev__summary::-webkit-details-marker {
+  display: none;
+}
+
+.afc-login-dev__summary::after {
+  margin-left: auto;
+  content: "+";
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--afc-muted);
+  transition: transform 180ms ease;
+}
+
+.afc-login-dev[open] .afc-login-dev__summary::after {
+  transform: rotate(45deg);
+}
+
+.afc-login-dev__badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(148, 156, 168, 0.35);
+  background: rgba(148, 156, 168, 0.12);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--afc-muted);
+}
+
+.afc-login-dev__label {
+  margin-left: 0.125rem;
+  color: var(--afc-soft-grey);
+}
+
+.afc-login-dev__body {
+  border-top: 1px dashed rgba(148, 156, 168, 0.22);
+  padding: 0.75rem 1rem 1rem;
+}
+
+.afc-login-dev__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: rgba(148, 156, 168, 0.85);
+}
+
+.afc-login-dev__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.afc-login-dev__list li {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.6875rem;
+}
+
+.afc-login-dev__list span {
+  color: var(--afc-soft-grey);
+}
+
+.afc-login-dev__list code {
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: rgba(148, 163, 184, 0.9);
+  word-break: break-all;
+  text-align: right;
+}
+
+@media (max-width: 374px) {
+  .afc-login-form-col {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  .afc-login-mobile-brand h1 {
+    font-size: 1.375rem;
+  }
+}
+
+/* ─── Payments workspace ─────────────────────────────────────────────────── */
+
+.afc-payments-page {
+  position: relative;
+}
+
+.afc-payments-ambient {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.afc-payments-ambient__lanes {
+  position: absolute;
+  inset: -10% -5%;
+  opacity: 0.045;
+  background-image:
+    linear-gradient(125deg, transparent 0%, transparent 46%, rgba(240, 180, 41, 0.35) 47%, transparent 48%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 72px
+    );
+}
+
+.afc-payments-ambient__receipt,
+.afc-payments-ambient__card {
+  position: absolute;
+  color: rgba(240, 180, 41, 0.14);
+}
+
+.afc-payments-ambient__receipt {
+  top: 8%;
+  right: 4%;
+  width: min(7rem, 18vw);
+}
+
+.afc-payments-ambient__card {
+  bottom: 10%;
+  left: 2%;
+  width: min(8rem, 22vw);
+  color: rgba(46, 204, 113, 0.12);
+}
+
+.afc-payment-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  border: 1px solid var(--afc-border-grey);
+  background: linear-gradient(
+    165deg,
+    rgba(28, 33, 41, 0.98) 0%,
+    rgba(8, 9, 12, 0.99) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.afc-payment-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--afc-gold-muted);
+  opacity: 0.85;
+}
+
+.afc-payment-card--paid::before {
+  background: linear-gradient(180deg, var(--afc-green), var(--afc-green-dark));
+}
+
+.afc-payment-card--pending::before {
+  background: linear-gradient(180deg, var(--afc-gold), var(--afc-amber));
+}
+
+.afc-payment-card--overdue::before {
+  width: 4px;
+  background: linear-gradient(180deg, var(--afc-red-hot), var(--afc-red-dark));
+}
+
+.afc-payment-card--neutral::before {
+  background: var(--afc-muted);
+}
+
+.afc-payment-card__header,
+.afc-payment-card__body,
+.afc-payment-card__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.afc-payment-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.afc-payment-card__amount {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--afc-white);
+}
+
+.afc-payment-card__meta {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.afc-payment-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.afc-payment-card__row dt {
+  color: var(--afc-muted);
+}
+
+.afc-payment-card__row dd {
+  margin: 0;
+  color: var(--afc-light-grey);
+  text-align: right;
+}
+
+.afc-payment-card__actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.afc-payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.afc-payments-filters {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1280px) {
+  .afc-payments-filters {
+    grid-template-columns: 1.4fr 1fr 0.8fr 0.8fr auto;
+    align-items: end;
+  }
+
+  .afc-payments-filters__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afc-payments-ambient__lanes,
+  .afc-payments-ambient__receipt,
+  .afc-payments-ambient__card {
+    animation: none !important;
+  }
+}
+
+.afc-payment-month {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid var(--afc-border-grey);
+  background: linear-gradient(
+    165deg,
+    rgba(28, 33, 41, 0.98) 0%,
+    rgba(8, 9, 12, 0.99) 100%
+  );
+  padding: 1.25rem 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.afc-payment-month::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--afc-gold), var(--afc-amber));
+}
+
+.afc-payment-month__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.afc-payment-month__title {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--afc-white);
+}
+
+.afc-payment-month__subtitle {
+  margin-top: 0.5rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--afc-muted);
+}
+
+.afc-payment-month__controls {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.afc-payment-month__picker {
+  min-width: 0;
+}
+
+.afc-payment-month__input {
+  min-height: 44px;
+  width: min(100%, 11rem);
+  border-radius: 0.625rem;
+  border: 1px solid var(--afc-border-grey);
+  background: rgba(8, 9, 12, 0.65);
+  padding: 0.625rem 0.875rem;
+  color: var(--afc-white);
+  font-size: 0.875rem;
+}
+
+.afc-payment-month__input:focus {
+  outline: 2px solid var(--afc-gold);
+  outline-offset: 2px;
+}
+
+.afc-payment-method-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(240, 180, 41, 0.28);
+  background: rgba(240, 180, 41, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--afc-gold-hot);
+}
+
+.afc-payment-method-recorded {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(46, 204, 113, 0.28);
+  background: rgba(46, 204, 113, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--afc-green-neon);
+}
+
+.afc-payment-method-missing {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 156, 168, 0.28);
+  background: rgba(148, 156, 168, 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--afc-muted);
+}
+
+.afc-received-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.afc-received-method-btn {
+  min-height: 44px;
+}
+
+.afc-received-method-btn--active {
+  box-shadow: 0 0 0 1px var(--afc-gold), 0 0 18px var(--afc-gold-glow);
+}
+
+.afc-payment-method-helper {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--afc-muted);
+}
+
+.afc-payments-advanced {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1rem;
+}
+
+.afc-payments-advanced summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--afc-muted);
+}
+
+.afc-payments-advanced__grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .afc-payments-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .afc-payments-advanced__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ─── Subscriptions workspace ─────────────────────────────────────────────── */
+
+.afc-subscriptions-page {
+  position: relative;
+}
+
+.afc-subscriptions-ambient {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.afc-subscriptions-ambient__lanes {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(201, 168, 76, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(201, 168, 76, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 72%);
+  opacity: 0.55;
+}
+
+.afc-subscriptions-ambient__badge,
+.afc-subscriptions-ambient__card {
+  position: absolute;
+  color: rgba(201, 168, 76, 0.14);
+}
+
+.afc-subscriptions-ambient__badge {
+  top: 4%;
+  right: 4%;
+  width: 6rem;
+  height: 6rem;
+}
+
+.afc-subscriptions-ambient__card {
+  bottom: 8%;
+  left: 3%;
+  width: 7rem;
+  height: 4.5rem;
+}
+
+.afc-subscription-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    165deg,
+    rgba(23, 28, 36, 0.98) 0%,
+    rgba(11, 14, 19, 0.99) 100%
+  );
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.afc-subscription-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+}
+
+.afc-subscription-card--active::before {
+  background: linear-gradient(180deg, var(--afc-green-neon), var(--afc-green));
+}
+
+.afc-subscription-card--cancelled::before {
+  background: linear-gradient(180deg, rgba(156, 163, 175, 0.8), rgba(107, 114, 128, 0.6));
+}
+
+.afc-subscription-card--expired::before {
+  background: linear-gradient(180deg, var(--afc-red-hot), var(--afc-red));
+}
+
+.afc-subscription-card--frozen::before {
+  background: linear-gradient(180deg, var(--afc-gold), var(--afc-amber));
+}
+
+.afc-subscription-card--neutral::before {
+  background: linear-gradient(180deg, rgba(156, 163, 175, 0.5), rgba(107, 114, 128, 0.35));
+}
+
+.afc-subscription-card__header,
+.afc-subscription-card__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.afc-subscription-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.afc-subscription-card__plan {
+  position: relative;
+  z-index: 1;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--afc-white);
+}
+
+.afc-subscription-card__meta {
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.625rem;
+}
+
+.afc-subscription-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.afc-subscription-card__row dt {
+  color: var(--afc-soft-grey);
+}
+
+.afc-subscription-card__row dd {
+  text-align: right;
+  color: var(--afc-white);
+}
+
+.afc-subscription-card__actions {
+  margin-top: 1.25rem;
+}
+
+.afc-subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.afc-subscriptions-filters {
+  display: grid;
+  gap: 1rem;
+}
+
+.afc-subscriptions-filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+@media (min-width: 768px) {
+  .afc-subscriptions-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .afc-subscriptions-filters__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 1280px) {
+  .afc-subscriptions-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afc-subscriptions-ambient__badge,
+  .afc-subscriptions-ambient__card {
+    animation: none !important;
   }
 }

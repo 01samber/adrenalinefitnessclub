@@ -2,27 +2,35 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { AddMeasurementModal } from "@/components/owner/AddMeasurementModal";
+import { EditClientProfileModal } from "@/components/owner/EditClientProfileModal";
+import { SubscriptionManagementPanel } from "@/components/owner/SubscriptionManagementPanel";
+import { SubscriptionStatusBadge } from "@/components/owner/SubscriptionStatusBadge";
 import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
+import { SquadAmbientBackground } from "@/components/owner/SquadAmbientBackground";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataRow, EmptyState } from "@/components/ui/DataRow";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { HeroBand } from "@/components/ui/HeroBand";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { MacroCompositionRing } from "@/components/ui/MacroCompositionRing";
 import { PlayerCard } from "@/components/ui/PlayerCard";
-import { ScoreboardHeader } from "@/components/ui/ScoreboardHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { ownerSidebarItems } from "@/lib/owner-sidebar";
 import type {
   ClientBooking,
+  ClientMeasurement,
   ClientPayment,
   ClientProgressNote,
   ClientSubscription,
   OwnerClientDetail,
+  OwnerClientListItem,
 } from "@/types/api";
 
 function formatDate(value: string | null | undefined) {
@@ -88,22 +96,6 @@ function paymentStatusVariant(
   }
 }
 
-function subscriptionStatusVariant(
-  status: string,
-): "success" | "danger" | "warning" | "neutral" {
-  switch (status) {
-    case "ACTIVE":
-      return "success";
-    case "FROZEN":
-    case "CANCELLED":
-      return "danger";
-    case "EXPIRED":
-      return "warning";
-    default:
-      return "neutral";
-  }
-}
-
 function bookingStatusVariant(
   status: string,
 ): "success" | "danger" | "neutral" {
@@ -132,19 +124,58 @@ function getActiveSubscription(
 
 function DetailSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="afc-surface animate-pulse p-6 sm:p-8">
-        <div className="h-8 w-48 rounded bg-afc-border-grey/40" />
-        <div className="mt-4 h-4 w-64 rounded bg-afc-border-grey/30" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-12 rounded bg-afc-border-grey/25" />
-          ))}
+    <div
+      className="afc-page-stack space-y-6"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading athlete profile"
+    >
+      <p className="afc-section-label">Syncing athlete profile…</p>
+
+      <div className="afc-hero-band afc-surface p-6 sm:p-8">
+        <div className="afc-stat-tile__skeleton-label w-24" />
+        <div className="mt-4 h-6 w-full max-w-2xl rounded bg-afc-panel-2 animate-pulse" />
+        <div className="mt-3 h-4 w-full max-w-xl rounded bg-afc-panel-2/80 animate-pulse" />
+        <div className="mt-5 h-8 w-56 rounded bg-afc-panel-2/60 animate-pulse" />
+      </div>
+
+      <div className="afc-client-hero rounded-[1.125rem] p-6 sm:p-8">
+        <div className="flex items-start gap-4">
+          <div className="h-16 w-16 shrink-0 rounded-xl bg-afc-panel-2 animate-pulse" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="h-6 w-48 rounded bg-afc-panel-2 animate-pulse" />
+            <div className="h-4 w-64 rounded bg-afc-panel-2/80 animate-pulse" />
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-7 w-24 rounded-full bg-afc-panel-2/70 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+      <div className="afc-stat-grid afc-stat-grid--compact">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="afc-surface h-28 animate-pulse" />
+          <StatCard key={index} label="—" value="—" loading staggerIndex={index} />
+        ))}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="afc-surface p-6 sm:p-8">
+            <div className="afc-stat-tile__skeleton-label w-32" />
+            <div className="mt-5 space-y-3">
+              {Array.from({ length: 5 }).map((__, row) => (
+                <div
+                  key={row}
+                  className="h-10 rounded-lg bg-afc-panel-2/70 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -281,6 +312,66 @@ function ProgressNoteItem({ note }: { note: ClientProgressNote }) {
   );
 }
 
+function MeasurementHistoryItem({
+  measurement,
+  isLatest = false,
+}: {
+  measurement: ClientMeasurement;
+  isLatest?: boolean;
+}) {
+  return (
+    <article
+      className={`afc-measurement-history-item ${isLatest ? "afc-measurement-history-item--latest" : ""}`}
+    >
+      <div className="afc-measurement-history-item__header">
+        <div>
+          <p className="afc-measurement-history-item__date">
+            {formatDate(measurement.measuredAt)}
+          </p>
+          {isLatest ? (
+            <span className="afc-measurement-history-item__badge">Latest</span>
+          ) : null}
+        </div>
+        <p className="afc-measurement-history-item__weight">
+          {measurement.weightKg} kg
+        </p>
+      </div>
+
+      <div className="afc-measurement-history-item__metrics">
+        <DataRow
+          label="Body fat %"
+          value={
+            measurement.bodyFatPercentage
+              ? `${measurement.bodyFatPercentage}%`
+              : "—"
+          }
+        />
+        <DataRow
+          label="Muscle (kg)"
+          value={measurement.muscleKg ? `${measurement.muscleKg} kg` : "—"}
+        />
+        <DataRow label="BMI" value={measurement.bmi ?? "—"} />
+      </div>
+
+      {measurement.coachAssessment ? (
+        <div className="afc-measurement-history-item__notes">
+          <p className="afc-measurement-history-item__label">Coach assessment</p>
+          <p className="afc-measurement-history-item__copy">
+            {measurement.coachAssessment}
+          </p>
+        </div>
+      ) : null}
+
+      {measurement.notes ? (
+        <div className="afc-measurement-history-item__notes">
+          <p className="afc-measurement-history-item__label">Notes</p>
+          <p className="afc-measurement-history-item__copy">{measurement.notes}</p>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 function ClientDetailContent() {
   const params = useParams();
   const clientId = typeof params.clientId === "string" ? params.clientId : "";
@@ -290,6 +381,11 @@ function ClientDetailContent() {
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [measurementFormKey, setMeasurementFormKey] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editFormKey, setEditFormKey] = useState(0);
 
   useEffect(() => {
     if (!clientId) return;
@@ -341,6 +437,26 @@ function ClientDetailContent() {
     setReloadKey((key) => key + 1);
   };
 
+  const handleMeasurementSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
+  const handleEditSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
+  const handleSubscriptionChanged = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
+  const openEditModal = () => {
+    setEditFormKey((key) => key + 1);
+    setEditModalOpen(true);
+  };
+
   const shellTitle = data?.user.fullName ?? "Athlete Profile";
   const shellSubtitle =
     "Coach-connected training, membership, payment, and progress overview.";
@@ -357,6 +473,46 @@ function ClientDetailContent() {
     activeSubscription?.plan.name ??
     (data?.profile?.assignedPlanId ? "Plan assigned" : "No plan assigned");
 
+  const rosterClientItem = useMemo<OwnerClientListItem | null>(() => {
+    if (!data) return null;
+
+    return {
+      user: data.user,
+      profile: data.profile,
+      assignedPlan: data.profile?.assignedPlan ?? null,
+      activeSubscription: activeSubscription
+        ? {
+            id: activeSubscription.id,
+            status: activeSubscription.status,
+            startDate: activeSubscription.startDate,
+            endDate: activeSubscription.endDate,
+            nextBillingDate: activeSubscription.nextBillingDate,
+            plan: activeSubscription.plan,
+          }
+        : null,
+      latestPayment: data.payments[0]
+        ? {
+            id: data.payments[0].id,
+            amount: data.payments[0].amount,
+            currency: data.payments[0].currency,
+            status: data.payments[0].status,
+            paidAt: data.payments[0].paymentDate,
+            dueDate: data.payments[0].dueDate,
+          }
+        : null,
+      latestMeasurement: data.measurements[0]
+        ? {
+            id: data.measurements[0].id,
+            measuredAt: data.measurements[0].measuredAt,
+            weightKg: Number(data.measurements[0].weightKg) || null,
+            bodyFatPercentage:
+              Number(data.measurements[0].bodyFatPercentage) || null,
+            muscleKg: Number(data.measurements[0].muscleKg) || null,
+          }
+        : null,
+    };
+  }, [data, activeSubscription]);
+
   return (
     <AppShell
       title={shellTitle}
@@ -364,25 +520,18 @@ function ClientDetailContent() {
       sidebarItems={ownerSidebarItems}
       brandSubtitle="Coach Mode"
     >
-      <div className="space-y-6">
+      <div className="afc-squad-page afc-page-stack relative space-y-6">
+        <SquadAmbientBackground variant="detail" />
+
+        <div className="relative z-[1] space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/owner/clients"
-            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-red/40 hover:bg-afc-red/10 hover:text-afc-white"
+            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-gold/40 hover:bg-afc-gold/10 hover:text-afc-white"
           >
             <span aria-hidden>←</span>
             Back to squad
           </Link>
-
-          <div className="afc-glass inline-flex w-fit items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
-            <span className="afc-status-pulse shrink-0" aria-hidden />
-            <span className="text-xs text-afc-soft-grey">
-              Live data ·{" "}
-              <code className="font-mono text-afc-green">
-                GET /api/owner/clients/{clientId}
-              </code>
-            </span>
-          </div>
         </div>
 
         {loading ? (
@@ -401,11 +550,23 @@ function ClientDetailContent() {
           <ErrorState message={error} onRetry={handleRetry} />
         ) : data ? (
           <>
-            <ScoreboardHeader
+            <HeroBand
               kicker="Coach view"
-              title={data.user.fullName}
-              subtitle="Athlete profile · live performance data"
+              headline={`${displayUserStatus(data.user.status)} athlete profile — review membership, payments, and training data below.`}
+              detail={
+                data.profile?.fitnessGoal
+                  ? `Training goal: ${data.profile.fitnessGoal}`
+                  : assignedPlanName !== "No plan assigned"
+                    ? `Assigned plan: ${assignedPlanName}`
+                    : "No training goal on file yet."
+              }
               live
+              liveLabel="LIVE PROFILE"
+              footer={
+                <code className="afc-hero-band__api-chip">
+                  GET /api/owner/clients/{clientId}
+                </code>
+              }
             />
 
             <PlayerCard
@@ -428,8 +589,31 @@ function ClientDetailContent() {
                   value: formatDate(data.profile?.joinDate),
                 },
               ]}
-              accent="red"
+              accent={
+                data.user.status === "ACTIVE"
+                  ? "green"
+                  : "neutral"
+              }
+              avatarStatus={
+                data.user.status === "ACTIVE"
+                  ? "active"
+                  : data.user.status === "FROZEN"
+                    ? "frozen"
+                    : "inactive"
+              }
             />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                className="min-h-[44px] w-full sm:w-auto"
+                onClick={openEditModal}
+              >
+                Edit profile
+              </Button>
+            </div>
 
             <ClientStatusPanel
               clientId={data.user.id}
@@ -439,13 +623,35 @@ function ClientDetailContent() {
               onStatusChanged={handleRetry}
             />
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            {successMessage ? (
+              <div
+                className="rounded-xl border border-afc-green/40 bg-afc-green/10 px-4 py-3 text-sm text-afc-green-neon"
+                role="status"
+              >
+                {successMessage}
+              </div>
+            ) : null}
+
+            <section>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <h2 className="afc-section-label">Athlete snapshot</h2>
+                {latestMeasurement ? (
+                  <MacroCompositionRing
+                    musclePercentage={latestMeasurement.musclePercentage}
+                    bodyFatPercentage={latestMeasurement.bodyFatPercentage}
+                    waterPercentage={latestMeasurement.waterPercentage}
+                  />
+                ) : null}
+              </div>
+              <div className="afc-stat-grid afc-stat-grid--compact">
               <StatCard
                 label="Membership"
                 value={activeSubscription?.status ?? "None"}
                 accent={
                   activeSubscription?.status === "ACTIVE" ? "success" : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={0}
               />
               <StatCard
                 label="Latest payment"
@@ -458,6 +664,8 @@ function ClientDetailContent() {
                       ? "danger"
                       : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={1}
               />
               <StatCard
                 label="Latest weight"
@@ -467,28 +675,46 @@ function ClientDetailContent() {
                     : "—"
                 }
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={2}
               />
               <StatCard
                 label="Latest BMI"
                 value={latestMeasurement?.bmi ?? "—"}
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={3}
               />
               <StatCard
                 label="Total bookings"
                 value={data.bookings.length}
                 accent="accent"
+                staggerIndex={4}
               />
               <StatCard
                 label="Completed sessions"
                 value={completedSessions}
                 accent="success"
+                staggerIndex={5}
               />
-            </div>
+              </div>
+            </section>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <Card accent="neutral" title="Training profile" hover>
+              <Card accent="neutral" title="Training profile" hover headerAction={
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="min-h-[44px]"
+                  onClick={openEditModal}
+                >
+                  Edit profile
+                </Button>
+              }>
                 {data.profile ? (
                   <>
+                    <DataRow label="Phone" value={data.user.phoneNumber ?? "—"} />
                     <DataRow
                       label="Date of birth"
                       value={formatDate(data.profile.dateOfBirth)}
@@ -529,53 +755,21 @@ function ClientDetailContent() {
                 title="Membership status"
                 headerAction={
                   activeSubscription ? (
-                    <Badge
-                      variant={subscriptionStatusVariant(
-                        activeSubscription.status,
-                      )}
-                    >
-                      {activeSubscription.status}
-                    </Badge>
+                    <SubscriptionStatusBadge status={activeSubscription.status} />
                   ) : (
                     <Badge variant="outline">None</Badge>
                   )
                 }
                 hover
               >
-                {activeSubscription ? (
-                  <>
-                    <DataRow
-                      label="Plan"
-                      value={activeSubscription.plan.name}
-                    />
-                    <DataRow
-                      label="Sessions / week"
-                      value={String(activeSubscription.plan.sessionsPerWeek)}
-                    />
-                    <DataRow
-                      label="Monthly price"
-                      value={formatCurrency(
-                        activeSubscription.plan.monthlyPrice,
-                        activeSubscription.plan.currency,
-                      )}
-                    />
-                    <DataRow
-                      label="Start date"
-                      value={formatDate(activeSubscription.startDate)}
-                    />
-                    <DataRow
-                      label="End date"
-                      value={formatDate(activeSubscription.endDate)}
-                    />
-                    <DataRow
-                      label="Next billing"
-                      value={formatDate(activeSubscription.nextBillingDate)}
-                    />
-                    <DataRow
-                      label="Status"
-                      value={activeSubscription.status}
-                    />
-                  </>
+                {rosterClientItem ? (
+                  <SubscriptionManagementPanel
+                    clientId={data.user.id}
+                    clientName={data.user.fullName}
+                    subscriptions={data.subscriptions}
+                    clients={[rosterClientItem]}
+                    onChanged={handleSubscriptionChanged}
+                  />
                 ) : (
                   <EmptyState message="No subscription on file." />
                 )}
@@ -583,7 +777,7 @@ function ClientDetailContent() {
             </div>
 
             <Card
-              accent="red"
+              accent="neutral"
               title="Payment record"
               subtitle="Recent payment history"
               headerAction={
@@ -636,7 +830,10 @@ function ClientDetailContent() {
                   </div>
                 </>
               ) : (
-                <EmptyState message="No payment records yet." />
+                <EmptyState
+                  variant="payments"
+                  message="No payments logged for this athlete yet."
+                />
               )}
             </Card>
 
@@ -644,66 +841,149 @@ function ClientDetailContent() {
               accent="green"
               title="Body composition snapshot"
               subtitle="Historical body composition values for coach tracking only."
+              headerAction={
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    setMeasurementFormKey((key) => key + 1);
+                    setMeasurementModalOpen(true);
+                  }}
+                >
+                  Add measurement
+                </Button>
+              }
             >
-              {latestMeasurement ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <DataRow
-                    label="Measured"
-                    value={formatDateTime(latestMeasurement.measuredAt)}
-                  />
-                  <DataRow
-                    label="Weight"
-                    value={`${latestMeasurement.weightKg} kg`}
-                  />
-                  <DataRow
-                    label="BMI"
-                    value={latestMeasurement.bmi ?? "—"}
-                  />
-                  <DataRow
-                    label="Body fat %"
-                    value={
-                      latestMeasurement.bodyFatPercentage
-                        ? `${latestMeasurement.bodyFatPercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Muscle %"
-                    value={
-                      latestMeasurement.musclePercentage
-                        ? `${latestMeasurement.musclePercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Water %"
-                    value={
-                      latestMeasurement.waterPercentage
-                        ? `${latestMeasurement.waterPercentage}%`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="Visceral fat"
-                    value={
-                      latestMeasurement.visceralFatKg
-                        ? `${latestMeasurement.visceralFatKg} kg`
-                        : "—"
-                    }
-                  />
-                  <DataRow
-                    label="BMR"
-                    value={
-                      latestMeasurement.basalMetabolicRate
-                        ? String(latestMeasurement.basalMetabolicRate)
-                        : "—"
-                    }
-                  />
+              {data.measurements.length ? (
+                <div className="space-y-4">
+                  {latestMeasurement ? (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <DataRow
+                        label="Measured"
+                        value={formatDateTime(latestMeasurement.measuredAt)}
+                      />
+                      <DataRow
+                        label="Weight"
+                        value={`${latestMeasurement.weightKg} kg`}
+                      />
+                      <DataRow
+                        label="BMI"
+                        value={latestMeasurement.bmi ?? "—"}
+                      />
+                      <DataRow
+                        label="Body fat %"
+                        value={
+                          latestMeasurement.bodyFatPercentage
+                            ? `${latestMeasurement.bodyFatPercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Muscle (kg)"
+                        value={
+                          latestMeasurement.muscleKg
+                            ? `${latestMeasurement.muscleKg} kg`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Muscle %"
+                        value={
+                          latestMeasurement.musclePercentage
+                            ? `${latestMeasurement.musclePercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Water %"
+                        value={
+                          latestMeasurement.waterPercentage
+                            ? `${latestMeasurement.waterPercentage}%`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="Visceral fat"
+                        value={
+                          latestMeasurement.visceralFatKg
+                            ? `${latestMeasurement.visceralFatKg} kg`
+                            : "—"
+                        }
+                      />
+                      <DataRow
+                        label="BMR"
+                        value={
+                          latestMeasurement.basalMetabolicRate
+                            ? String(latestMeasurement.basalMetabolicRate)
+                            : "—"
+                        }
+                      />
+                    </div>
+                  ) : null}
+
+                  {latestMeasurement?.coachAssessment ? (
+                    <div className="rounded-xl border border-afc-border-grey/70 bg-afc-black/25 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                        Coach assessment
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-afc-light-grey">
+                        {latestMeasurement.coachAssessment}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {latestMeasurement?.notes ? (
+                    <div className="rounded-xl border border-afc-border-grey/70 bg-afc-black/25 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-afc-soft-grey">
+                        Notes
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-afc-light-grey">
+                        {latestMeasurement.notes}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="afc-measurement-history">
+                    <h3 className="afc-measurement-history__title">
+                      Measurement history
+                    </h3>
+                    <div className="afc-measurement-history__list">
+                      {data.measurements.map((measurement, index) => (
+                        <MeasurementHistoryItem
+                          key={measurement.id}
+                          measurement={measurement}
+                          isLatest={index === 0}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <EmptyState message="No measurements recorded yet." />
+                <EmptyState
+                  variant="measurements"
+                  message="Track their first measurement to start the progress trend."
+                />
               )}
             </Card>
+
+            <AddMeasurementModal
+              key={`add-measurement-${clientId}-${measurementFormKey}`}
+              open={measurementModalOpen}
+              clientId={data.user.id}
+              clientName={data.user.fullName}
+              profileHeightCm={data.profile?.heightCm}
+              onClose={() => setMeasurementModalOpen(false)}
+              onSuccess={handleMeasurementSuccess}
+            />
+
+            <EditClientProfileModal
+              key={`edit-profile-${clientId}-${editFormKey}`}
+              open={editModalOpen}
+              client={data}
+              onClose={() => setEditModalOpen(false)}
+              onSuccess={handleEditSuccess}
+            />
 
             <Card accent="neutral" title="Session history" hover>
               {data.bookings.length ? (
@@ -746,7 +1026,10 @@ function ClientDetailContent() {
                   </div>
                 </>
               ) : (
-                <EmptyState message="No bookings on file." />
+                <EmptyState
+                  variant="sessions"
+                  message="No sessions booked yet."
+                />
               )}
             </Card>
 
@@ -758,13 +1041,17 @@ function ClientDetailContent() {
                   ))}
                 </ul>
               ) : (
-                <EmptyState message="No progress notes yet." />
+                <EmptyState
+                  variant="notes"
+                  message="Add your first note after their next session."
+                />
               )}
             </Card>
           </>
         ) : (
           <LoadingState message="Loading client profile..." />
         )}
+        </div>
       </div>
     </AppShell>
   );

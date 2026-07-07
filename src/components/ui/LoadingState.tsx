@@ -14,8 +14,8 @@ export function LoadingState({
       aria-live="polite"
     >
       <div className="relative h-12 w-12">
-        <div className="absolute inset-0 animate-spin rounded-full border-2 border-afc-border-grey border-t-afc-red" />
-        <div className="absolute inset-2 animate-pulse rounded-full bg-afc-red/20" />
+        <div className="absolute inset-0 animate-spin rounded-full border-2 border-afc-border-grey border-t-afc-gold" />
+        <div className="absolute inset-2 animate-pulse rounded-full bg-afc-gold/15" />
       </div>
       <p className="text-center text-sm text-afc-soft-grey">{message}</p>
     </div>

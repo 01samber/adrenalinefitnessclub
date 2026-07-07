@@ -13,6 +13,7 @@ import { ProfileGoalCard } from "@/components/client/ProfileGoalCard";
 import { SubscriptionSummaryCard } from "@/components/client/SubscriptionSummaryCard";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { HeroBand } from "@/components/ui/HeroBand";
 import { StatCard } from "@/components/ui/StatCard";
 import { ApiClientError, apiGet } from "@/lib/api-client";
 import { clientSidebarItems } from "@/lib/client-sidebar";
@@ -82,11 +83,29 @@ function ClientDashboardContent() {
   const latestMeasurement = data?.latestBodyMeasurement ?? null;
   const planName =
     subscription?.plan.name ?? data?.assignedPlan?.name ?? "—";
+  const paymentNeedsAttention = isPaymentAttention(latestPayment?.status);
+  const upcomingCount = data?.upcomingBookings.length ?? 0;
+
+  const clientHeroDetail = (() => {
+    if (!data) return undefined;
+    if (data.coachAssessment) {
+      return `Coach assessment on file — see notes below for guidance.`;
+    }
+    const latestNote = data.progressNotes[0];
+    if (latestNote) {
+      return `Latest coach note (${latestNote.noteType.toLowerCase().replace(/_/g, " ")}): ${latestNote.content.slice(0, 96)}${latestNote.content.length > 96 ? "…" : ""}`;
+    }
+    const latestAlert = data.notifications[0];
+    if (latestAlert) {
+      return `Latest alert: ${latestAlert.title}`;
+    }
+    return "Performance counts and session details live in the snapshot grid below.";
+  })();
 
   return (
     <AppShell
       title="Player Performance Hub"
-      subtitle="Coach-connected training profile and progress at a glance"
+      subtitle="Coach-connected training profile and progress"
       sidebarItems={clientSidebarItems}
       brandSubtitle="Athlete Portal"
     >
@@ -95,27 +114,38 @@ function ClientDashboardContent() {
       ) : error ? (
         <ErrorState message={error} onRetry={handleRetry} />
       ) : data ? (
-        <div className="space-y-6 sm:space-y-8">
+        <div className="afc-page-stack space-y-6 sm:space-y-8">
+          <HeroBand
+            kicker="Athlete portal"
+            headline="Your coach-connected training profile — membership, payments, and progress in one place."
+            detail={clientHeroDetail}
+            live
+            liveLabel="LIVE DATA"
+            footer={
+              <code className="afc-hero-band__api-chip">GET /api/client/me</code>
+            }
+          />
+
           <ClientHeroCard data={data} />
 
-          <div className="afc-glass inline-flex w-fit items-center gap-2 rounded-full border border-afc-border-grey/80 px-3 py-1.5">
-            <span className="afc-status-pulse shrink-0" aria-hidden />
-            <span className="text-xs text-afc-soft-grey">
-              Live data ·{" "}
-              <code className="font-mono text-afc-green">GET /api/client/me</code>
-            </span>
-          </div>
-
-          <div>
-            <p className="afc-section-label mb-4">Performance snapshot</p>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-              <StatCard label="Plan" value={planName} accent="accent" />
+          <section>
+            <h2 className="afc-section-label mb-4">Performance snapshot</h2>
+            <div className="afc-stat-grid">
+              <StatCard
+                label="Plan"
+                value={planName}
+                accent="accent"
+                animateNumeric={false}
+                staggerIndex={0}
+              />
               <StatCard
                 label="Membership"
                 value={subscription?.status ?? "None"}
                 accent={
                   subscription?.status === "ACTIVE" ? "success" : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={1}
               />
               <StatCard
                 label="Payment"
@@ -123,10 +153,12 @@ function ClientDashboardContent() {
                 accent={
                   latestPayment?.status === "PAID"
                     ? "success"
-                    : isPaymentAttention(latestPayment?.status)
+                    : paymentNeedsAttention
                       ? "danger"
                       : "neutral"
                 }
+                animateNumeric={false}
+                staggerIndex={2}
               />
               <StatCard
                 label="Weight"
@@ -136,19 +168,24 @@ function ClientDashboardContent() {
                     : "—"
                 }
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={3}
               />
               <StatCard
                 label="Body index"
                 value={latestMeasurement?.bmi ?? "—"}
                 accent="neutral"
+                animateNumeric={false}
+                staggerIndex={4}
               />
               <StatCard
                 label="Sessions"
-                value={data.upcomingBookings.length}
+                value={upcomingCount}
                 accent="success"
+                staggerIndex={5}
               />
             </div>
-          </div>
+          </section>
 
           <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
             <ProfileGoalCard data={data} />

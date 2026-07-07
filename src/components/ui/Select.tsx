@@ -5,8 +5,10 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 
 export type SelectOption = {
   label: string;
@@ -29,6 +31,9 @@ export type SelectProps = {
   /** When false, do not render a separate empty placeholder option (options already include one). */
   usePlaceholderOption?: boolean;
 };
+
+const MENU_GAP_PX = 6;
+const MENU_MAX_HEIGHT_PX = 280;
 
 function slugifyLabel(label: string) {
   return label.toLowerCase().replace(/\s+/g, "-");
@@ -64,8 +69,12 @@ export function Select({
 
   const [open, setOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [menuPlacement, setMenuPlacement] = useState<"bottom" | "top">("bottom");
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
 
   const selectedLabel = getSelectedLabel(value, options, placeholder);
   const hasValue = Boolean(value);
@@ -73,6 +82,32 @@ export function Select({
   const closeMenu = useCallback(() => {
     setOpen(false);
     setHighlightIndex(-1);
+  }, []);
+
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const maxHeight = Math.min(
+      MENU_MAX_HEIGHT_PX,
+      Math.floor(window.innerHeight * 0.45),
+    );
+    const spaceBelow = window.innerHeight - rect.bottom - MENU_GAP_PX;
+    const spaceAbove = rect.top - MENU_GAP_PX;
+    const openAbove = spaceBelow < maxHeight && spaceAbove > spaceBelow;
+
+    setMenuPlacement(openAbove ? "top" : "bottom");
+    setMenuStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      maxHeight,
+      zIndex: 9999,
+      ...(openAbove
+        ? { bottom: window.innerHeight - rect.top + MENU_GAP_PX }
+        : { top: rect.bottom + MENU_GAP_PX }),
+    });
   }, []);
 
   const openMenu = useCallback(() => {
@@ -94,10 +129,30 @@ export function Select({
   useEffect(() => {
     if (!open) return;
 
+    updateMenuPosition();
+
+    const handleReposition = () => updateMenuPosition();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [open, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+
     function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        closeMenu();
+      const target = event.target as Node;
+      if (
+        rootRef.current?.contains(target) ||
+        menuRef.current?.contains(target)
+      ) {
+        return;
       }
+      closeMenu();
     }
 
     function handleEscape(event: globalThis.KeyboardEvent) {
@@ -175,6 +230,52 @@ export function Select({
 
   const describedBy = [errorId, hintId].filter(Boolean).join(" ") || undefined;
 
+  const menu =
+    open ? (
+      <ul
+        ref={menuRef}
+        id={listboxId}
+        role="listbox"
+        aria-labelledby={`${selectId}-trigger`}
+        className={[
+          "afc-select-menu",
+          "afc-select-menu--portal",
+          menuPlacement === "top" ? "afc-select-menu--above" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={menuStyle}
+      >
+        {options.map((option, index) => {
+          const isSelected = option.value === value;
+          const isHighlighted = index === highlightIndex;
+
+          return (
+            <li
+              key={option.value || option.label}
+              role="option"
+              aria-selected={isSelected}
+              className={[
+                "afc-select-option",
+                isSelected ? "afc-select-option--selected" : "",
+                isHighlighted ? "afc-select-option--highlighted" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onMouseEnter={() => setHighlightIndex(index)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption(option.value)}
+            >
+              <span className="afc-select-option__label">{option.label}</span>
+              {option.helper ? (
+                <span className="afc-select-option__helper">{option.helper}</span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    ) : null;
+
   return (
     <div className={fieldClassName} ref={rootRef}>
       <label htmlFor={selectId} className="afc-select-field__label">
@@ -234,44 +335,11 @@ export function Select({
           </span>
           <span className="afc-select-trigger__arrow" aria-hidden />
         </button>
-
-        {open ? (
-          <ul
-            id={listboxId}
-            role="listbox"
-            aria-labelledby={`${selectId}-trigger`}
-            className="afc-select-menu"
-          >
-            {options.map((option, index) => {
-              const isSelected = option.value === value;
-              const isHighlighted = index === highlightIndex;
-
-              return (
-                <li
-                  key={option.value || option.label}
-                  role="option"
-                  aria-selected={isSelected}
-                  className={[
-                    "afc-select-option",
-                    isSelected ? "afc-select-option--selected" : "",
-                    isHighlighted ? "afc-select-option--highlighted" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onMouseEnter={() => setHighlightIndex(index)}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => selectOption(option.value)}
-                >
-                  <span className="afc-select-option__label">{option.label}</span>
-                  {option.helper ? (
-                    <span className="afc-select-option__helper">{option.helper}</span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
       </div>
+
+      {menu && typeof document !== "undefined"
+        ? createPortal(menu, document.body)
+        : null}
 
       {hint && !error ? (
         <p id={hintId} className="afc-select-field__hint">

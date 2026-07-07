@@ -54,6 +54,7 @@ export interface OwnerClientListPlan {
   sessionsPerWeek: number;
   monthlyPrice: string;
   currency: string;
+  status?: string;
 }
 
 export interface OwnerClientListActiveSubscription {
@@ -61,7 +62,7 @@ export interface OwnerClientListActiveSubscription {
   status: string;
   startDate: string;
   endDate: string | null;
-  nextBillingDate: string;
+  nextBillingDate: string | null;
   plan: OwnerClientListPlan;
 }
 
@@ -252,6 +253,47 @@ export interface OwnerClientDetail {
   progressNotes: ClientProgressNote[];
 }
 
+export type OwnerBodyMeasurement = {
+  id: string;
+  clientId: string;
+  measuredAt: string;
+  weightKg: number;
+  heightCmSnapshot: number;
+  bodyFatPercentage: number | null;
+  muscleKg: number | null;
+  chestCm: number | null;
+  waistCm: number | null;
+  hipsCm: number | null;
+  armsCm: number | null;
+  thighsCm: number | null;
+  coachAssessment: string | null;
+  notes: string | null;
+};
+
+export type CreateMeasurementInput = {
+  measuredAt?: string;
+  weightKg: number;
+  heightCmSnapshot?: number | null;
+  bodyFatPercentage?: number | null;
+  muscleKg?: number | null;
+  musclePercentage?: number | null;
+  waterPercentage?: number | null;
+  visceralFatKg?: number | null;
+  basalMetabolicRate?: number | null;
+  metabolicAge?: number | null;
+  chestCm?: number | null;
+  waistCm?: number | null;
+  hipsCm?: number | null;
+  armsCm?: number | null;
+  thighsCm?: number | null;
+  coachAssessment?: string;
+  notes?: string;
+};
+
+export type CreateMeasurementResponse = {
+  measurement: OwnerBodyMeasurement;
+};
+
 export interface OwnerClientStatusUpdate {
   user: SafeUser;
   profile: ClientProfile;
@@ -313,6 +355,28 @@ export interface CreateClientResponse {
   } | null;
 }
 
+export interface UpdateClientInput {
+  fullName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
+  heightCm?: number;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  fitnessGoal?: string;
+  activityLevel?: ActivityLevel;
+  medicalNotes?: string;
+  injuries?: string;
+  assignedPlanId?: string | null;
+  joinDate?: string;
+  coachNotes?: string;
+}
+
+export interface UpdateClientResponse {
+  user: SafeUser;
+  profile: ClientProfile;
+}
+
 export interface OwnerDashboardData {
   totalClients: number;
   activeClients: number;
@@ -364,4 +428,132 @@ export interface ClientMeData {
   progressNotes: ClientProgressNote[];
   unreadNotificationsCount: number;
   notifications: ClientNotification[];
+}
+
+export type PaymentStatus =
+  | "PAID"
+  | "UNPAID"
+  | "PARTIAL"
+  | "OVERDUE"
+  | "CANCELLED";
+
+export type PaymentMethod =
+  | "CASH"
+  | "CARD"
+  | "BANK_TRANSFER"
+  | "WHISH"
+  | "OMT"
+  | "OTHER";
+
+export type PaymentStatusFilter = "" | PaymentStatus;
+
+export interface OwnerPayment {
+  id: string;
+  clientId: string;
+  subscriptionId: string | null;
+  amount: string;
+  currency: string;
+  paymentDate: string | null;
+  dueDate: string;
+  status: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type OwnerPaymentsResponse = PaginatedResponse<OwnerPayment>;
+
+export interface CreatePaymentInput {
+  clientId: string;
+  subscriptionId?: string | null;
+  amount: number;
+  currency?: string;
+  paymentDate?: string | null;
+  dueDate: string;
+  status?: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+}
+
+export type CreatePaymentResponse = OwnerPayment;
+
+export interface UpdatePaymentStatusInput {
+  status: PaymentStatus;
+  paymentDate?: string | null;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+}
+
+export type UpdatePaymentStatusResponse = OwnerPayment;
+
+export interface OwnerSubscriptionListItem {
+  id: string;
+  clientId: string;
+  planId: string;
+  startDate: string;
+  endDate: string | null;
+  nextBillingDate: string;
+  status: string;
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+  plan: MembershipPlan;
+}
+
+export type OwnerSubscriptionsResponse =
+  PaginatedResponse<OwnerSubscriptionListItem>;
+
+export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "FROZEN" | "CANCELLED";
+
+export type SubscriptionStatusFilter = "" | SubscriptionStatus;
+
+export interface CreateSubscriptionInput {
+  clientId: string;
+  planId: string;
+  startDate: string;
+  endDate?: string | null;
+  nextBillingDate?: string;
+  status?: SubscriptionStatus;
+  autoRenew?: boolean;
+}
+
+export type CreateSubscriptionResponse = OwnerSubscriptionListItem;
+
+export interface UpdateSubscriptionInput {
+  planId?: string;
+  endDate?: string | null;
+  nextBillingDate?: string;
+  status?: SubscriptionStatus;
+  autoRenew?: boolean;
+}
+
+export type UpdateSubscriptionResponse = OwnerSubscriptionListItem;
+export type CancelSubscriptionResponse = OwnerSubscriptionListItem;
+
+export interface SubscriptionPageSummary {
+  totalCount: number;
+  activeCount: number;
+  cancelledCount: number;
+  expiredCount: number;
+  frozenCount: number;
+  activeMonthlyValue: number;
+  dueForBillingCount: number;
+  currency: string;
+}
+
+export interface PaymentPageSummary {
+  totalCount: number;
+  paidAmount: number;
+  unpaidAmount: number;
+  partialAmount: number;
+  overdueAmount: number;
+  totalAmount: number;
+  collectionRate: number;
+  currency: string;
+}
+
+export interface MonthSelection {
+  year: number;
+  month: number;
 }

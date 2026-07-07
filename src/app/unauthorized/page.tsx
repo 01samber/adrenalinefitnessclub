@@ -34,18 +34,18 @@ export default function UnauthorizedPage() {
     <div className="afc-gradient-bg flex min-h-screen items-center justify-center px-4 py-12">
       <div className="afc-gradient-border w-full max-w-md">
         <Card
-          accent="red"
+          accent="neutral"
           variant="elevated"
-          className="rounded-[1.125rem] text-center"
+          className="rounded-xl text-center"
           padding="lg"
         >
           <div
-            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-afc-red/35 bg-afc-red/10 text-2xl"
+            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-lg border border-afc-gold/35 bg-afc-gold/10 text-2xl"
             aria-hidden
           >
             ⛔
           </div>
-          <h1 className="text-2xl font-black uppercase tracking-tight text-afc-white">
+          <h1 className="afc-display text-2xl font-bold tracking-tight text-afc-white">
             Access denied
           </h1>
           <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-afc-muted">

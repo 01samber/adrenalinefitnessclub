@@ -52,7 +52,7 @@ export function AppShell({
         onClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden lg:pl-[var(--afc-sidebar-width)]">
         <Topbar
           title={title}
           subtitle={subtitle}

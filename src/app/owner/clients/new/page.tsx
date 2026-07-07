@@ -60,7 +60,7 @@ function TextAreaField({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={Boolean(error)}
-        className={`min-h-[112px] w-full rounded-xl border bg-afc-black/40 px-4 py-3 text-base leading-relaxed text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-red focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-red/25 ${
+        className={`min-h-[112px] w-full rounded-lg border bg-afc-black/50 px-4 py-3 text-base leading-relaxed text-afc-white placeholder:text-afc-soft-grey/50 transition-all focus:border-afc-gold focus:bg-afc-charcoal focus:outline-none focus:ring-2 focus:ring-afc-gold/25 ${
           error ? "border-afc-red" : "border-afc-border-grey"
         }`}
       />
@@ -214,7 +214,7 @@ function CreateClientContent() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <Link
             href="/owner/clients"
-            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-red/40 hover:bg-afc-red/10 hover:text-afc-white"
+            className="inline-flex min-h-[44px] w-fit items-center gap-2 rounded-lg border border-afc-border bg-afc-black/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-afc-muted transition-colors hover:border-afc-gold/40 hover:bg-afc-gold/10 hover:text-afc-white"
           >
             <span aria-hidden>←</span>
             Back to squad
@@ -302,7 +302,7 @@ function CreateClientContent() {
               step={1}
               title="Account Access"
               subtitle="Portal credentials for the new athlete"
-              accent="red"
+              accent="neutral"
             >
               <Input
                 label="Full name"
