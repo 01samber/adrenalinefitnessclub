@@ -2,6 +2,7 @@ export type NavIconId =
   | "dashboard"
   | "squad"
   | "revenue"
+  | "membership"
   | "sessions"
   | "progress"
   | "analytics"
@@ -64,6 +65,18 @@ export function NavIcon({ id, active = false }: NavIconProps) {
             strokeLinejoin="round"
           />
           <path d="M4 19h16" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      );
+    case "membership":
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M12 4.5 14.25 9.5 19.5 10.25 15.75 14l.9 5.25L12 17l-4.65 2.25.9-5.25L4.5 10.25 9.75 9.5Z"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+          />
+          <path d="M6 19.5h12" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" opacity="0.7" />
         </svg>
       );
     case "sessions":

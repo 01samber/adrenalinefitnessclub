@@ -4654,3 +4654,179 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ─── Subscriptions workspace ─────────────────────────────────────────────── */
+
+.afc-subscriptions-page {
+  position: relative;
+}
+
+.afc-subscriptions-ambient {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.afc-subscriptions-ambient__lanes {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(201, 168, 76, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(201, 168, 76, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 72%);
+  opacity: 0.55;
+}
+
+.afc-subscriptions-ambient__badge,
+.afc-subscriptions-ambient__card {
+  position: absolute;
+  color: rgba(201, 168, 76, 0.14);
+}
+
+.afc-subscriptions-ambient__badge {
+  top: 4%;
+  right: 4%;
+  width: 6rem;
+  height: 6rem;
+}
+
+.afc-subscriptions-ambient__card {
+  bottom: 8%;
+  left: 3%;
+  width: 7rem;
+  height: 4.5rem;
+}
+
+.afc-subscription-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    165deg,
+    rgba(23, 28, 36, 0.98) 0%,
+    rgba(11, 14, 19, 0.99) 100%
+  );
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.afc-subscription-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+}
+
+.afc-subscription-card--active::before {
+  background: linear-gradient(180deg, var(--afc-green-neon), var(--afc-green));
+}
+
+.afc-subscription-card--cancelled::before {
+  background: linear-gradient(180deg, rgba(156, 163, 175, 0.8), rgba(107, 114, 128, 0.6));
+}
+
+.afc-subscription-card--expired::before {
+  background: linear-gradient(180deg, var(--afc-red-hot), var(--afc-red));
+}
+
+.afc-subscription-card--frozen::before {
+  background: linear-gradient(180deg, var(--afc-gold), var(--afc-amber));
+}
+
+.afc-subscription-card--neutral::before {
+  background: linear-gradient(180deg, rgba(156, 163, 175, 0.5), rgba(107, 114, 128, 0.35));
+}
+
+.afc-subscription-card__header,
+.afc-subscription-card__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.afc-subscription-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.afc-subscription-card__plan {
+  position: relative;
+  z-index: 1;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--afc-white);
+}
+
+.afc-subscription-card__meta {
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.625rem;
+}
+
+.afc-subscription-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.afc-subscription-card__row dt {
+  color: var(--afc-soft-grey);
+}
+
+.afc-subscription-card__row dd {
+  text-align: right;
+  color: var(--afc-white);
+}
+
+.afc-subscription-card__actions {
+  margin-top: 1.25rem;
+}
+
+.afc-subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.afc-subscriptions-filters {
+  display: grid;
+  gap: 1rem;
+}
+
+.afc-subscriptions-filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+@media (min-width: 768px) {
+  .afc-subscriptions-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .afc-subscriptions-filters__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 1280px) {
+  .afc-subscriptions-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afc-subscriptions-ambient__badge,
+  .afc-subscriptions-ambient__card {
+    animation: none !important;
+  }
+}

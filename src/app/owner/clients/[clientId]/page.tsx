@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AddMeasurementModal } from "@/components/owner/AddMeasurementModal";
 import { EditClientProfileModal } from "@/components/owner/EditClientProfileModal";
+import { SubscriptionManagementPanel } from "@/components/owner/SubscriptionManagementPanel";
+import { SubscriptionStatusBadge } from "@/components/owner/SubscriptionStatusBadge";
 import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
 import { SquadAmbientBackground } from "@/components/owner/SquadAmbientBackground";
 import { AppShell } from "@/components/layout/AppShell";
@@ -28,6 +30,7 @@ import type {
   ClientProgressNote,
   ClientSubscription,
   OwnerClientDetail,
+  OwnerClientListItem,
 } from "@/types/api";
 
 function formatDate(value: string | null | undefined) {
@@ -87,22 +90,6 @@ function paymentStatusVariant(
     case "OVERDUE":
       return "danger";
     case "PARTIAL":
-      return "warning";
-    default:
-      return "neutral";
-  }
-}
-
-function subscriptionStatusVariant(
-  status: string,
-): "success" | "danger" | "warning" | "neutral" {
-  switch (status) {
-    case "ACTIVE":
-      return "success";
-    case "FROZEN":
-    case "CANCELLED":
-      return "danger";
-    case "EXPIRED":
       return "warning";
     default:
       return "neutral";
@@ -460,6 +447,11 @@ function ClientDetailContent() {
     setReloadKey((key) => key + 1);
   };
 
+  const handleSubscriptionChanged = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
   const openEditModal = () => {
     setEditFormKey((key) => key + 1);
     setEditModalOpen(true);
@@ -480,6 +472,46 @@ function ClientDetailContent() {
   const assignedPlanName =
     activeSubscription?.plan.name ??
     (data?.profile?.assignedPlanId ? "Plan assigned" : "No plan assigned");
+
+  const rosterClientItem = useMemo<OwnerClientListItem | null>(() => {
+    if (!data) return null;
+
+    return {
+      user: data.user,
+      profile: data.profile,
+      assignedPlan: data.profile?.assignedPlan ?? null,
+      activeSubscription: activeSubscription
+        ? {
+            id: activeSubscription.id,
+            status: activeSubscription.status,
+            startDate: activeSubscription.startDate,
+            endDate: activeSubscription.endDate,
+            nextBillingDate: activeSubscription.nextBillingDate,
+            plan: activeSubscription.plan,
+          }
+        : null,
+      latestPayment: data.payments[0]
+        ? {
+            id: data.payments[0].id,
+            amount: data.payments[0].amount,
+            currency: data.payments[0].currency,
+            status: data.payments[0].status,
+            paidAt: data.payments[0].paymentDate,
+            dueDate: data.payments[0].dueDate,
+          }
+        : null,
+      latestMeasurement: data.measurements[0]
+        ? {
+            id: data.measurements[0].id,
+            measuredAt: data.measurements[0].measuredAt,
+            weightKg: Number(data.measurements[0].weightKg) || null,
+            bodyFatPercentage:
+              Number(data.measurements[0].bodyFatPercentage) || null,
+            muscleKg: Number(data.measurements[0].muscleKg) || null,
+          }
+        : null,
+    };
+  }, [data, activeSubscription]);
 
   return (
     <AppShell
@@ -723,53 +755,21 @@ function ClientDetailContent() {
                 title="Membership status"
                 headerAction={
                   activeSubscription ? (
-                    <Badge
-                      variant={subscriptionStatusVariant(
-                        activeSubscription.status,
-                      )}
-                    >
-                      {activeSubscription.status}
-                    </Badge>
+                    <SubscriptionStatusBadge status={activeSubscription.status} />
                   ) : (
                     <Badge variant="outline">None</Badge>
                   )
                 }
                 hover
               >
-                {activeSubscription ? (
-                  <>
-                    <DataRow
-                      label="Plan"
-                      value={activeSubscription.plan.name}
-                    />
-                    <DataRow
-                      label="Sessions / week"
-                      value={String(activeSubscription.plan.sessionsPerWeek)}
-                    />
-                    <DataRow
-                      label="Monthly price"
-                      value={formatCurrency(
-                        activeSubscription.plan.monthlyPrice,
-                        activeSubscription.plan.currency,
-                      )}
-                    />
-                    <DataRow
-                      label="Start date"
-                      value={formatDate(activeSubscription.startDate)}
-                    />
-                    <DataRow
-                      label="End date"
-                      value={formatDate(activeSubscription.endDate)}
-                    />
-                    <DataRow
-                      label="Next billing"
-                      value={formatDate(activeSubscription.nextBillingDate)}
-                    />
-                    <DataRow
-                      label="Status"
-                      value={activeSubscription.status}
-                    />
-                  </>
+                {rosterClientItem ? (
+                  <SubscriptionManagementPanel
+                    clientId={data.user.id}
+                    clientName={data.user.fullName}
+                    subscriptions={data.subscriptions}
+                    clients={[rosterClientItem]}
+                    onChanged={handleSubscriptionChanged}
+                  />
                 ) : (
                   <EmptyState message="No subscription on file." />
                 )}

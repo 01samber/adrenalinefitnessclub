@@ -439,6 +439,44 @@ export interface OwnerSubscriptionListItem {
 export type OwnerSubscriptionsResponse =
   PaginatedResponse<OwnerSubscriptionListItem>;
 
+export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "FROZEN" | "CANCELLED";
+
+export type SubscriptionStatusFilter = "" | SubscriptionStatus;
+
+export interface CreateSubscriptionInput {
+  clientId: string;
+  planId: string;
+  startDate: string;
+  endDate?: string | null;
+  nextBillingDate?: string;
+  status?: SubscriptionStatus;
+  autoRenew?: boolean;
+}
+
+export type CreateSubscriptionResponse = OwnerSubscriptionListItem;
+
+export interface UpdateSubscriptionInput {
+  planId?: string;
+  endDate?: string | null;
+  nextBillingDate?: string;
+  status?: SubscriptionStatus;
+  autoRenew?: boolean;
+}
+
+export type UpdateSubscriptionResponse = OwnerSubscriptionListItem;
+export type CancelSubscriptionResponse = OwnerSubscriptionListItem;
+
+export interface SubscriptionPageSummary {
+  totalCount: number;
+  activeCount: number;
+  cancelledCount: number;
+  expiredCount: number;
+  frozenCount: number;
+  activeMonthlyValue: number;
+  dueForBillingCount: number;
+  currency: string;
+}
+
 export interface PaymentPageSummary {
   totalCount: number;
   paidAmount: number;
