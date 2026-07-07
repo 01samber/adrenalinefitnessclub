@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AddMeasurementModal } from "@/components/owner/AddMeasurementModal";
+import { EditClientProfileModal } from "@/components/owner/EditClientProfileModal";
 import { ClientStatusPanel } from "@/components/owner/ClientStatusPanel";
 import { SquadAmbientBackground } from "@/components/owner/SquadAmbientBackground";
 import { AppShell } from "@/components/layout/AppShell";
@@ -396,6 +397,8 @@ function ClientDetailContent() {
   const [successMessage, setSuccessMessage] = useState("");
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
   const [measurementFormKey, setMeasurementFormKey] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editFormKey, setEditFormKey] = useState(0);
 
   useEffect(() => {
     if (!clientId) return;
@@ -450,6 +453,16 @@ function ClientDetailContent() {
   const handleMeasurementSuccess = (message: string) => {
     setSuccessMessage(message);
     setReloadKey((key) => key + 1);
+  };
+
+  const handleEditSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setReloadKey((key) => key + 1);
+  };
+
+  const openEditModal = () => {
+    setEditFormKey((key) => key + 1);
+    setEditModalOpen(true);
   };
 
   const shellTitle = data?.user.fullName ?? "Athlete Profile";
@@ -558,6 +571,18 @@ function ClientDetailContent() {
               }
             />
 
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                className="min-h-[44px] w-full sm:w-auto"
+                onClick={openEditModal}
+              >
+                Edit profile
+              </Button>
+            </div>
+
             <ClientStatusPanel
               clientId={data.user.id}
               clientName={data.user.fullName}
@@ -644,9 +669,20 @@ function ClientDetailContent() {
             </section>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <Card accent="neutral" title="Training profile" hover>
+              <Card accent="neutral" title="Training profile" hover headerAction={
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="min-h-[44px]"
+                  onClick={openEditModal}
+                >
+                  Edit profile
+                </Button>
+              }>
                 {data.profile ? (
                   <>
+                    <DataRow label="Phone" value={data.user.phoneNumber ?? "—"} />
                     <DataRow
                       label="Date of birth"
                       value={formatDate(data.profile.dateOfBirth)}
@@ -932,13 +968,21 @@ function ClientDetailContent() {
             </Card>
 
             <AddMeasurementModal
-              key={measurementFormKey}
+              key={`add-measurement-${clientId}-${measurementFormKey}`}
               open={measurementModalOpen}
               clientId={data.user.id}
               clientName={data.user.fullName}
               profileHeightCm={data.profile?.heightCm}
               onClose={() => setMeasurementModalOpen(false)}
               onSuccess={handleMeasurementSuccess}
+            />
+
+            <EditClientProfileModal
+              key={`edit-profile-${clientId}-${editFormKey}`}
+              open={editModalOpen}
+              client={data}
+              onClose={() => setEditModalOpen(false)}
+              onSuccess={handleEditSuccess}
             />
 
             <Card accent="neutral" title="Session history" hover>

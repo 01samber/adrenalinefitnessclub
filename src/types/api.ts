@@ -290,6 +290,28 @@ export interface CreateClientResponse {
   } | null;
 }
 
+export interface UpdateClientInput {
+  fullName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
+  heightCm?: number;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  fitnessGoal?: string;
+  activityLevel?: ActivityLevel;
+  medicalNotes?: string;
+  injuries?: string;
+  assignedPlanId?: string | null;
+  joinDate?: string;
+  coachNotes?: string;
+}
+
+export interface UpdateClientResponse {
+  user: SafeUser;
+  profile: ClientProfile;
+}
+
 export interface OwnerDashboardData {
   totalClients: number;
   activeClients: number;

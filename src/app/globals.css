@@ -1685,6 +1685,16 @@ body {
   background: rgba(201, 168, 76, 0.5);
 }
 
+.afc-input-readonly {
+  background: rgba(0, 0, 0, 0.35) !important;
+  color: var(--afc-muted) !important;
+}
+
+.afc-input-readonly:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 /* ─── Status confirmation modal ───────────────────────────────────────────── */
 
 .afc-status-modal {
