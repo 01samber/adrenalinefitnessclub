@@ -50,10 +50,16 @@ export function CancelSubscriptionConfirmModal({
           </h2>
           <p className="afc-status-modal__client">{clientName}</p>
           <p className="mt-2 text-sm font-semibold text-afc-gold">
-            {subscription.plan.name} ·{" "}
-            {formatSubscriptionMoney(
-              subscription.plan.monthlyPrice,
-              subscription.plan.currency,
+            {subscription.plan ? (
+              <>
+                {subscription.plan.name} ·{" "}
+                {formatSubscriptionMoney(
+                  subscription.plan.monthlyPrice,
+                  subscription.plan.currency,
+                )}
+              </>
+            ) : (
+              "No plan assigned"
             )}
           </p>
         </div>

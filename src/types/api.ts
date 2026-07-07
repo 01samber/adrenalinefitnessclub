@@ -487,23 +487,6 @@ export interface UpdatePaymentStatusInput {
 
 export type UpdatePaymentStatusResponse = OwnerPayment;
 
-export interface OwnerSubscriptionListItem {
-  id: string;
-  clientId: string;
-  planId: string;
-  startDate: string;
-  endDate: string | null;
-  nextBillingDate: string;
-  status: string;
-  autoRenew: boolean;
-  createdAt: string;
-  updatedAt: string;
-  plan: MembershipPlan;
-}
-
-export type OwnerSubscriptionsResponse =
-  PaginatedResponse<OwnerSubscriptionListItem>;
-
 export type SubscriptionStatus = "ACTIVE" | "EXPIRED" | "FROZEN" | "CANCELLED";
 
 export type SubscriptionStatusFilter = "" | SubscriptionStatus;

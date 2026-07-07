@@ -142,8 +142,10 @@ export function CreatePaymentModal({
       { value: "", label: "No subscription link" },
       ...subscriptions.map((subscription) => ({
         value: subscription.id,
-        label: subscription.plan.name,
-        helper: `${subscription.status} · ${subscription.plan.sessionsPerWeek} sessions/week`,
+        label: subscription.plan?.name ?? "No plan assigned",
+        helper: subscription.plan
+          ? `${subscription.status} · ${subscription.plan.sessionsPerWeek} sessions/week`
+          : subscription.status,
       })),
     ],
     [subscriptions],
@@ -165,7 +167,7 @@ export function CreatePaymentModal({
 
       if (key === "subscriptionId" && value) {
         const subscription = subscriptions.find((item) => item.id === value);
-        if (subscription) {
+        if (subscription?.plan) {
           next.amount = subscription.plan.monthlyPrice;
           next.currency = subscription.plan.currency;
         }

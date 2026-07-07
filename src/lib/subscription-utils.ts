@@ -143,8 +143,10 @@ export function computeSubscriptionPageSummary(
     switch (item.status) {
       case "ACTIVE":
         counts.activeCount += 1;
-        currency = item.plan.currency || currency;
-        activeMonthlyValue += Number(item.plan.monthlyPrice) || 0;
+        if (item.plan) {
+          currency = item.plan.currency || currency;
+          activeMonthlyValue += Number(item.plan.monthlyPrice) || 0;
+        }
         if (item.nextBillingDate.slice(0, 10) <= today) {
           dueForBillingCount += 1;
         }

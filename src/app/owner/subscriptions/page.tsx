@@ -127,10 +127,16 @@ function SubscriptionMobileCard({
         <SubscriptionStatusBadge status={subscription.status} />
       </div>
 
-      <p className="afc-subscription-card__plan mt-4">{subscription.plan.name}</p>
+      <p className="afc-subscription-card__plan mt-4">
+        {subscription.plan?.name ?? "No plan assigned"}
+      </p>
       <p className="mt-1 text-sm text-afc-muted">
-        {subscription.plan.sessionsPerWeek} sessions/week ·{" "}
-        {formatSubscriptionMoney(subscription.plan.monthlyPrice, subscription.plan.currency)}
+        {subscription.plan
+          ? `${subscription.plan.sessionsPerWeek} sessions/week · ${formatSubscriptionMoney(
+              subscription.plan.monthlyPrice,
+              subscription.plan.currency,
+            )}`
+          : "—"}
       </p>
 
       <dl className="afc-subscription-card__meta">
@@ -294,7 +300,7 @@ function SubscriptionsContent() {
       return (
         client.user.fullName.toLowerCase().includes(query) ||
         client.user.email.toLowerCase().includes(query) ||
-        item.plan.name.toLowerCase().includes(query)
+        item.plan?.name?.toLowerCase().includes(query)
       );
     });
   }, [subscriptionsData?.items, planFilter, debouncedSearch, clientMap]);
@@ -571,9 +577,11 @@ function SubscriptionsContent() {
                                   </p>
                                 </td>
                                 <td className="px-4 py-3.5 text-sm text-afc-white">
-                                  {subscription.plan.name}
+                                  {subscription.plan?.name ?? "No plan assigned"}
                                   <p className="text-xs text-afc-muted">
-                                    {subscription.plan.sessionsPerWeek} sessions/week
+                                    {subscription.plan
+                                      ? `${subscription.plan.sessionsPerWeek} sessions/week`
+                                      : "—"}
                                   </p>
                                 </td>
                                 <td className="px-4 py-3.5">
@@ -589,10 +597,12 @@ function SubscriptionsContent() {
                                   {formatSubscriptionDate(subscription.nextBillingDate)}
                                 </td>
                                 <td className="px-4 py-3.5 text-sm font-medium text-afc-gold">
-                                  {formatSubscriptionMoney(
-                                    subscription.plan.monthlyPrice,
-                                    subscription.plan.currency,
-                                  )}
+                                  {subscription.plan
+                                    ? formatSubscriptionMoney(
+                                        subscription.plan.monthlyPrice,
+                                        subscription.plan.currency,
+                                      )
+                                    : "—"}
                                 </td>
                                 <td className="px-4 py-3.5 text-sm text-afc-soft-grey">
                                   {formatSubscriptionDate(subscription.updatedAt)}

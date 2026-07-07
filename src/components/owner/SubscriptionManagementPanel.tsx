@@ -41,7 +41,29 @@ function getPrimarySubscription(subscriptions: ClientSubscription[]) {
 }
 
 function toListItem(subscription: ClientSubscription): OwnerSubscriptionListItem {
-  return subscription;
+  return {
+    id: subscription.id,
+    clientId: subscription.clientId,
+    planId: subscription.planId,
+    startDate: subscription.startDate,
+    endDate: subscription.endDate,
+    nextBillingDate: subscription.nextBillingDate,
+    status: subscription.status,
+    autoRenew: subscription.autoRenew,
+    createdAt: subscription.createdAt,
+    updatedAt: subscription.updatedAt,
+    client: null,
+    latestPayment: null,
+    plan: {
+      id: subscription.plan.id,
+      name: subscription.plan.name,
+      sessionsPerWeek: subscription.plan.sessionsPerWeek,
+      monthlyPrice: subscription.plan.monthlyPrice,
+      currency: subscription.plan.currency,
+      status: subscription.plan.isActive ? "ACTIVE" : "INACTIVE",
+      isActive: subscription.plan.isActive,
+    },
+  };
 }
 
 export function SubscriptionManagementPanel({
@@ -96,17 +118,25 @@ export function SubscriptionManagementPanel({
 
       {primarySubscription ? (
         <>
-          <DataRow label="Plan" value={primarySubscription.plan.name} />
+          <DataRow label="Plan" value={primarySubscription.plan?.name ?? "No plan assigned"} />
           <DataRow
             label="Sessions / week"
-            value={String(primarySubscription.plan.sessionsPerWeek)}
+            value={
+              primarySubscription.plan
+                ? String(primarySubscription.plan.sessionsPerWeek)
+                : "—"
+            }
           />
           <DataRow
             label="Monthly price"
-            value={formatSubscriptionMoney(
-              primarySubscription.plan.monthlyPrice,
-              primarySubscription.plan.currency,
-            )}
+            value={
+              primarySubscription.plan
+                ? formatSubscriptionMoney(
+                    primarySubscription.plan.monthlyPrice,
+                    primarySubscription.plan.currency,
+                  )
+                : "—"
+            }
           />
           <DataRow
             label="Start date"

@@ -353,7 +353,7 @@ function PaymentsContent() {
   function getPlanLabel(payment: OwnerPayment) {
     if (!payment.subscriptionId) return "—";
     const subscription = subscriptionMap.get(payment.subscriptionId);
-    return subscription?.plan.name ?? "Linked subscription";
+    return subscription?.plan?.name ?? "Linked subscription";
   }
 
   function handleRetry() {
