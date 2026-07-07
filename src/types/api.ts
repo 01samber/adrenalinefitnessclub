@@ -342,3 +342,84 @@ export interface ClientMeData {
   unreadNotificationsCount: number;
   notifications: ClientNotification[];
 }
+
+export type PaymentStatus =
+  | "PAID"
+  | "UNPAID"
+  | "PARTIAL"
+  | "OVERDUE"
+  | "CANCELLED";
+
+export type PaymentMethod =
+  | "CASH"
+  | "CARD"
+  | "BANK_TRANSFER"
+  | "WHISH"
+  | "OMT"
+  | "OTHER";
+
+export type PaymentStatusFilter = "" | PaymentStatus;
+
+export interface OwnerPayment {
+  id: string;
+  clientId: string;
+  subscriptionId: string | null;
+  amount: string;
+  currency: string;
+  paymentDate: string | null;
+  dueDate: string;
+  status: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type OwnerPaymentsResponse = PaginatedResponse<OwnerPayment>;
+
+export interface CreatePaymentInput {
+  clientId: string;
+  subscriptionId?: string | null;
+  amount: number;
+  currency?: string;
+  paymentDate?: string | null;
+  dueDate: string;
+  status?: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+}
+
+export type CreatePaymentResponse = OwnerPayment;
+
+export interface UpdatePaymentStatusInput {
+  status: PaymentStatus;
+  paymentDate?: string | null;
+  notes?: string;
+}
+
+export type UpdatePaymentStatusResponse = OwnerPayment;
+
+export interface OwnerSubscriptionListItem {
+  id: string;
+  clientId: string;
+  planId: string;
+  startDate: string;
+  endDate: string | null;
+  nextBillingDate: string;
+  status: string;
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+  plan: MembershipPlan;
+}
+
+export type OwnerSubscriptionsResponse =
+  PaginatedResponse<OwnerSubscriptionListItem>;
+
+export interface PaymentPageSummary {
+  totalCount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  currency: string;
+}

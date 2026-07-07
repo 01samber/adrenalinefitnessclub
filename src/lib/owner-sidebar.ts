@@ -3,13 +3,7 @@ import type { SidebarItem } from "@/components/layout/Sidebar";
 export const ownerSidebarItems: SidebarItem[] = [
   { label: "Control Center", href: "/owner/dashboard", icon: "dashboard" },
   { label: "Squad", href: "/owner/clients", icon: "squad" },
-  {
-    label: "Revenue",
-    href: "/owner/payments",
-    icon: "revenue",
-    disabled: true,
-    badge: "Soon",
-  },
+  { label: "Payments", href: "/owner/payments", icon: "revenue" },
   {
     label: "Sessions",
     href: "/owner/bookings",
