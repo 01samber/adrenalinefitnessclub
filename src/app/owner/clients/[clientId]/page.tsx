@@ -136,19 +136,58 @@ function getActiveSubscription(
 
 function DetailSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="afc-surface animate-pulse p-6 sm:p-8">
-        <div className="h-8 w-48 rounded bg-afc-border-grey/40" />
-        <div className="mt-4 h-4 w-64 rounded bg-afc-border-grey/30" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-12 rounded bg-afc-border-grey/25" />
-          ))}
+    <div
+      className="afc-page-stack space-y-6"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading athlete profile"
+    >
+      <p className="afc-section-label">Syncing athlete profile…</p>
+
+      <div className="afc-hero-band afc-surface p-6 sm:p-8">
+        <div className="afc-stat-tile__skeleton-label w-24" />
+        <div className="mt-4 h-6 w-full max-w-2xl rounded bg-afc-panel-2 animate-pulse" />
+        <div className="mt-3 h-4 w-full max-w-xl rounded bg-afc-panel-2/80 animate-pulse" />
+        <div className="mt-5 h-8 w-56 rounded bg-afc-panel-2/60 animate-pulse" />
+      </div>
+
+      <div className="afc-client-hero rounded-[1.125rem] p-6 sm:p-8">
+        <div className="flex items-start gap-4">
+          <div className="h-16 w-16 shrink-0 rounded-xl bg-afc-panel-2 animate-pulse" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="h-6 w-48 rounded bg-afc-panel-2 animate-pulse" />
+            <div className="h-4 w-64 rounded bg-afc-panel-2/80 animate-pulse" />
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-7 w-24 rounded-full bg-afc-panel-2/70 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+      <div className="afc-stat-grid afc-stat-grid--compact">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="afc-surface h-28 animate-pulse" />
+          <StatCard key={index} label="—" value="—" loading staggerIndex={index} />
+        ))}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div key={index} className="afc-surface p-6 sm:p-8">
+            <div className="afc-stat-tile__skeleton-label w-32" />
+            <div className="mt-5 space-y-3">
+              {Array.from({ length: 5 }).map((__, row) => (
+                <div
+                  key={row}
+                  className="h-10 rounded-lg bg-afc-panel-2/70 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>

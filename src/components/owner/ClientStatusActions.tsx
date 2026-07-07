@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ActionIcon } from "@/components/ui/ActionIcon";
-import { Button } from "@/components/ui/Button";import { ApiClientError, apiPatch } from "@/lib/api-client";
+import { Button } from "@/components/ui/Button";
+import { ApiClientError, apiPatch } from "@/lib/api-client";
 import {
   clientStatusActionLabel,
   clientStatusSuccessMessage,
